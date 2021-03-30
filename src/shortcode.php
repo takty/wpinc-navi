@@ -3,13 +3,12 @@
  * Shortcode
  *
  * @author Takuto Yanagida
- * @version 2021-03-22
+ * @version 2021-03-30
  */
 
-namespace st\shortcode;
+namespace wpinc\compass\shortcode;
 
-require_once __DIR__ . '/../tag/navigation.php';
-
+require_once __DIR__ . '/navigation.php';
 
 function add_page_navigation_shortcode() {
 	add_action(
@@ -19,14 +18,14 @@ function add_page_navigation_shortcode() {
 				'child-page-nav',
 				function ( $as ) {
 					$as = shortcode_atts( array( 'style' => false ), $as );
-					return \st\get_the_child_page_navigation( array( 'class' => $as['style'] ) );
+					return \wpinc\compass\shortcode\get_the_child_page_navigation( array( 'class' => $as['style'] ) );
 				}
 			);
 			add_shortcode(
 				'sibling-page-nav',
 				function ( $as ) {
 					$as = shortcode_atts( array( 'style' => false ), $as );
-					return \st\get_the_sibling_page_navigation( array( 'class' => $as['style'] ) );
+					return \wpinc\compass\shortcode\get_the_sibling_page_navigation( array( 'class' => $as['style'] ) );
 				}
 			);
 		}
@@ -188,7 +187,7 @@ function add_post_type_list_shortcode( $post_type, $taxonomy = false, $args = ar
 	}
 	$args = array_merge(
 		array(
-			'year_date_function' => '\st\shortcode\get_item_year_date_news',
+			'year_date_function' => '\wpinc\compass\shortcode\get_item_year_date_news',
 			'year_format'        => false,
 		),
 		$args
@@ -245,17 +244,17 @@ function get_item_list( $post_type, $taxonomy, $term_slug, $latest_count, $stick
 	if ( $latest_count !== false && is_numeric( $latest_count ) ) {
 		$latest_count = (int) $latest_count;
 		if ( $term_slug ) {
-			$args = \st\append_tax_query( $taxonomy, $term_slug, $args );
+			$args = \wpinc\append_tax_query( $taxonomy, $term_slug, $args );
 		}
 		if ( $sticky ) {
-			$ps = \st\get_custom_sticky_and_latest_posts( $post_type, $latest_count, $args );
+			$ps = \wpinc\get_custom_sticky_and_latest_posts( $post_type, $latest_count, $args );
 		} else {
-			$ps = \st\get_latest_posts( $post_type, $latest_count, $args );
+			$ps = \wpinc\get_latest_posts( $post_type, $latest_count, $args );
 		}
 	} else {
-		$args = \st\append_post_type_query( $post_type, -1 );
+		$args = \wpinc\append_post_type_query( $post_type, -1 );
 		if ( $term_slug ) {
-			$args = \st\append_tax_query( $taxonomy, $term_slug, $args );
+			$args = \wpinc\append_tax_query( $taxonomy, $term_slug, $args );
 		}
 		$ps = get_posts( $args );
 	}
@@ -278,7 +277,7 @@ function get_item_list( $post_type, $taxonomy, $term_slug, $latest_count, $stick
 	$items = array();
 	foreach ( $ps as $p ) {
 		$title = esc_html( strip_tags( get_the_title( $p->ID ) ) );
-		$cats  = \st\get_the_term_names( $p->ID, $taxonomy );
+		$cats  = \wpinc\get_the_term_names( $p->ID, $taxonomy );
 		$url   = esc_attr( get_the_permalink( $p->ID ) );
 
 		list( $year, $date ) = call_user_func( $year_date, $p->ID );
@@ -301,7 +300,7 @@ function echo_list( $atts, $items, $pt, $year_format = false ) {
 		$tag = get_item_list_heading( $atts['heading'] );
 		$t   = get_term_by( 'slug', $atts['term'], $atts['taxonomy'] );
 		if ( false !== $t ) {
-			echo "<$tag>" . esc_html( \st\get_term_name( $t ) ) . "</$tag>";
+			echo "<$tag>" . esc_html( \wpinc\get_term_name( $t ) ) . "</$tag>";
 		}
 	}
 	if ( $atts['year-heading'] ) {
@@ -360,7 +359,7 @@ function echo_item_list( $items, $style = '', $pt = '' ) {
 		);
 		?>
 		<ul class="list-item list-item-<?php echo esc_attr( $pt ); ?> shortcode">
-			<?php \st\the_loop_posts( 'template-parts/item', $pt, $posts ); ?>
+			<?php \wpinc\the_loop_posts( 'template-parts/item', $pt, $posts ); ?>
 		</ul>
 		<?php
 	} else {
@@ -385,8 +384,8 @@ function get_item_year_date_news( $post_id ) {
 }
 
 function get_item_year_date_event( $post_id ) {
-	$date_bgn = get_post_meta( $post_id, \st\event\PMK_DATE_BGN, true );
-	$date_end = get_post_meta( $post_id, \st\event\PMK_DATE_END, true );
+	$date_bgn = get_post_meta( $post_id, \wpinc\event\PMK_DATE_BGN, true );
+	$date_end = get_post_meta( $post_id, \wpinc\event\PMK_DATE_END, true );
 	if ( empty( $date_bgn ) && ! empty( $date_end ) ) {
 		$date_bgn = $date_end;
 	}

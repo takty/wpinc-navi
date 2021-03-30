@@ -3,10 +3,14 @@
  * Search Function for Custom Fields
  *
  * @author Takuto Yanagida
- * @version 2021-03-24
+ * @version 2021-03-30
  */
 
-namespace st;
+namespace wpinc\compass;
+
+function mb_trim( $str ) {
+	return preg_replace( '/\A[\p{C}\p{Z}]++|[\p{C}\p{Z}]++\z/u', '', $str );
+}
 
 class Search {
 
@@ -379,7 +383,7 @@ class Search {
 				$ret[] = $term;
 				continue;
 			}
-			$sts = array_map( '\st\mb_trim', mb_split( "[「『（［｛〈《【〔〖〘〚＜」』）］｝〉》】〕〗〙〛＞、，。．？！：・]+", $term ) );
+			$sts = array_map( '\wpinc\compass\mb_trim', mb_split( "[「『（［｛〈《【〔〖〘〚＜」』）］｝〉》】〕〗〙〛＞、，。．？！：・]+", $term ) );
 			foreach ( $sts as $t ) {
 				if ( empty( $t ) ) {
 					continue;

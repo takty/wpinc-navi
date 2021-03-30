@@ -3,185 +3,49 @@
  * Navigation Tags
  *
  * @author Takuto Yanagida
- * @version 2021-03-26
+ * @version 2021-03-30
  */
 
-namespace st;
+namespace wpinc\compass;
 
-require_once __DIR__ . '/../util/text.php';
-require_once __DIR__ . '/../util/url.php';
-
-
-function the_yearly_archive_select( $post_type = 'post', $default_title = 'Year', $args = array(), $meta_key = false ) {
-	$args = array_merge(
-		array(
-			'post_type' => $post_type,
-			'type'      => 'yearly',
-			'format'    => 'option',
-		),
-		$args
-	);
-	?>
-	<select onchange="document.location.href = this.value;">
-		<option value="#"><?php echo esc_html( $default_title ); ?></option>
-	<?php
-	if ( false === $meta_key ) {
-		wp_get_archives( $args );
-	} else {
-		get_custom_archives( $meta_key, $args );
-	}
-	?>
-	</select>
-	<?php
+/**
+ *
+ */
+function the_post_navigation( array $args = array() ) {
+	echo get_the_post_navigation( $args );  // phpcs:disable
 }
 
-function the_taxonomy_archive_select( $taxonomy, $default_title = 'Category', $args = array() ) {
-	?>
-	<select onchange="document.location.href = this.value;">
-		<option value="#"><?php echo esc_html( $default_title ); ?></option>
-		<?php the_taxonomy_archive_option( $taxonomy, $args ); ?>
-	</select>
-	<?php
+/**
+ *
+ */
+function the_posts_pagination( array $args = array() ) {
+	echo get_the_posts_pagination( $args );  // phpcs:disable
 }
 
-function the_taxonomy_archive_option( $taxonomy, $args = array() ) {
-	$args  = array_merge(
-		array(
-			'hide_empty' => false,
-			'parent'     => 0,
-		),
-		$args
-	);
-	$terms = get_terms( $taxonomy, $args );
+/**
+ *
+ */
+function the_child_page_navigation( array $args = array() ) {
+	echo get_the_child_page_navigation( $args );  // phpcs:disable
+}
 
-	foreach ( $terms as $t ) {
-		echo '<option value="' . esc_attr( get_term_link( $t ) ) . '">' . esc_html( $t->name ) . '</option>';
-		$args['parent'] = $t->term_id;
+/**
+ *
+ */
+function the_sibling_page_navigation( array $args = array() ) {
+	echo get_the_sibling_page_navigation( $args );  // phpcs:disable
+}
 
-		$cts = get_terms( $taxonomy, $args );
-		foreach ( $cts as $ct ) {
-			echo '<option value="' . esc_attr( get_term_link( $ct ) ) . '">' . '— ' . esc_html( $ct->name ) . '</option>';
-		}
-	}
+/**
+ *
+ */
+function the_page_break_navigation( array $args = array() ) {
+	echo get_the_page_break_navigation( $args );  // phpcs:disable
 }
 
 
 // -----------------------------------------------------------------------------
 
-
-function get_custom_archives( $meta_key, $args = array() ) {
-	global $wpdb, $wp_locale;
-	$r = array_merge(
-		array(
-			'type'            => 'monthly',
-			'limit'           => '',
-			'format'          => 'html',
-			'before'          => '',
-			'after'           => '',
-			'show_post_count' => false,
-			'echo'            => 1,
-			'order'           => 'DESC',
-			'post_type'       => 'post',
-		),
-		$args
-	);
-
-	$post_type_object = get_post_type_object( $r['post_type'] );
-	if ( ! is_post_type_viewable( $post_type_object ) ) {
-		return;
-	}
-	if ( ! empty( $r['limit'] ) ) {
-		$r['limit'] = absint( $r['limit'] );
-		$r['limit'] = ' LIMIT ' . $r['limit'];
-	}
-
-	$order = strtoupper( $r['order'] );
-	if ( 'ASC' !== $order ) {
-		$order = 'DESC';
-	}
-	$where = $wpdb->prepare( "WHERE post_type = %s AND post_status = 'publish'", $r['post_type'] );
-	$where = apply_filters( 'getarchives_where', $where, $r );
-	$join  = "INNER JOIN $wpdb->postmeta ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id AND $wpdb->postmeta.meta_key = '$meta_key' )";
-	$join  = apply_filters( 'getarchives_join', $join, $r );
-
-	$output       = '';
-	$last_changed = wp_cache_get_last_changed( 'posts' );
-	$limit        = $r['limit'];
-
-	if ( 'monthly' === $r['type'] ) {
-		$query = "SELECT YEAR(meta_value) AS `year`, MONTH(meta_value) AS `month`, count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(meta_value), MONTH(meta_value) ORDER BY meta_value $order $limit";
-		$key   = md5( $query );
-		$key   = "wp_get_archives:$key:$last_changed";
-
-		$results = wp_cache_get( $key, 'posts' );
-		if ( ! $results ) {
-			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'posts' );
-		}
-		if ( $results ) {
-			$after = $r['after'];
-			foreach ( (array) $results as $result ) {
-				$url = get_month_link( $result->year, $result->month );
-				if ( 'post' !== $r['post_type'] ) {
-					$url = add_query_arg( 'post_type', $r['post_type'], $url );
-				}
-				/* translators: 1: month name, 2: 4-digit year */
-				$text = sprintf( __( '%1$s %2$d' ), $wp_locale->get_month( $result->month ), $result->year );
-				if ( $r['show_post_count'] ) {
-					$r['after'] = '&nbsp;(' . $result->posts . ')' . $after;
-				}
-				$output .= get_archives_link( $url, $text, $r['format'], $r['before'], $r['after'] );
-			}
-		}
-	} elseif ( 'yearly' === $r['type'] ) {
-		$query = "SELECT YEAR(meta_value) AS `year`, count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(meta_value) ORDER BY meta_value $order $limit";
-		$key   = md5( $query );
-		$key   = "wp_get_archives:$key:$last_changed";
-
-		$results = wp_cache_get( $key, 'posts' );
-		if ( ! $results ) {
-			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'posts' );
-		}
-		if ( $results ) {
-			$after = $r['after'];
-			foreach ( (array) $results as $result ) {
-				$url = get_year_link( $result->year );
-				if ( 'post' !== $r['post_type'] ) {
-					$url = add_query_arg( 'post_type', $r['post_type'], $url );
-				}
-				$text = sprintf( '%d', $result->year );
-				if ( $r['show_post_count'] ) {
-					$r['after'] = '&nbsp;(' . $result->posts . ')' . $after;
-				}
-				$output .= get_archives_link( $url, $text, $r['format'], $r['before'], $r['after'] );
-			}
-		}
-	}
-	if ( $r['echo'] ) {
-		echo $output;
-	} else {
-		return $output;
-	}
-}
-
-
-// -----------------------------------------------------------------------------
-
-
-function the_post_navigation_with_list_link( $args = array() ) {
-	$args = array_merge( array( 'has_list_link' => true ), $args );
-	echo get_the_post_navigation( $args );
-}
-
-function get_the_post_navigation_with_list_link( $args = array() ) {
-	$args = array_merge( array( 'has_list_link' => true ), $args );
-	return get_the_post_navigation( $args );
-}
-
-function the_post_navigation( $args = array() ) {
-	echo get_the_post_navigation( $args );
-}
 
 function get_the_post_navigation( $args = array() ) {
 	$args = array_merge(
@@ -243,14 +107,6 @@ function get_the_post_navigation( $args = array() ) {
 			break;
 	}
 	return $args['before'] . _navigation_markup( $temp, 'post-navigation', $args['screen_reader_text'] ) . $args['after'];
-}
-
-
-// -----------------------------------------------------------------------------
-
-
-function the_posts_pagination( $args = array() ) {
-	echo get_the_posts_pagination( $args );
 }
 
 function get_the_posts_pagination( $args = array() ) {
@@ -408,10 +264,6 @@ function paginate_links( $args = array() ) {
 // -----------------------------------------------------------------------------
 
 
-function the_child_page_navigation( $args = array() ) {
-	echo get_the_child_page_navigation( $args );
-}
-
 function get_the_child_page_navigation( $args = array() ) {
 	$ps = get_child_pages( false, $args );
 	if ( isset( $args['hide_page_with_thumbnail'] ) && $args['hide_page_with_thumbnail'] ) {
@@ -443,10 +295,6 @@ function get_the_child_page_navigation( $args = array() ) {
 	</nav>
 	<?php
 	return ob_get_clean();
-}
-
-function the_sibling_page_navigation( $args = array() ) {
-	echo get_the_sibling_page_navigation( $args );
 }
 
 function get_the_sibling_page_navigation( $args = array() ) {
@@ -488,4 +336,32 @@ function get_the_sibling_page_navigation( $args = array() ) {
 	</nav>
 	<?php
 	return ob_get_clean();
+}
+
+
+// -----------------------------------------------------------------------------
+
+
+function get_the_page_break_navigation( array $args = array() ) {
+	$args += array(
+		'before' => '',
+		'after'  => '',
+	);
+
+	global $page, $numpages, $multipage, $post;
+	if ( ! $multipage ) {
+		return;
+	}
+	$output = '<nav class="navigation page-break-navigation"><div class="nav-links">';
+	for ( $i = 1; $i <= $numpages; ++$i ) {
+		if ( $i !== $page ) {
+			$_url = esc_url( \wpinc\compass\page_break\get_page_break_link( $i, $post ) );
+
+			$output .= "<a class=\"nav-page-break-link\" href=\"$_url\">$i</a>";
+		} else {
+			$output .= "<span class=\"nav-page-break-current\">$i</span>";
+		}
+	}
+	$output .= '</div></nav>';
+	return $output;
 }

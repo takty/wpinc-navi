@@ -6,10 +6,18 @@
  * @version 2021-03-23
  */
 
-namespace st;
+namespace wpinc\compass;
 
-require_once __DIR__ . '/../util/url.php';
-
+function get_current_uri( $raw = false ) {
+	$host = $_SERVER['HTTP_HOST'];
+	if ( isset( $_SERVER['HTTP_X_FORWARDED_HOST'] ) ) {  // When reverse proxy exists.
+		$host = $_SERVER['HTTP_X_FORWARDED_HOST'];
+	}
+	if ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) {
+		return ( is_ssl() ? 'https://' : 'http://' ) . $host . $_SERVER['REQUEST_URI_ORIG'];
+	}
+	return ( is_ssl() ? 'https://' : 'http://' ) . $host . $_SERVER['REQUEST_URI'];
+}
 
 class NavMenu {
 
@@ -39,7 +47,7 @@ class NavMenu {
 
 	public static function set_cache_enabled( $flag ) {
 		self::$_is_cache_enabled = $flag;
-		add_action( 'wp_update_nav_menu', array( '\st\NavMenu', '_cb_wp_update_nav_menu' ), 10, 2 );
+		add_action( 'wp_update_nav_menu', array( '\wpinc\compass\NavMenu', '_cb_wp_update_nav_menu' ), 10, 2 );
 	}
 
 	public static function set_current_archive_enabled( $flag ) {
@@ -68,7 +76,7 @@ class NavMenu {
 	protected $_id_to_attr;
 
 	public function __construct( $menu_name, $expanded_page_ids = false, $object_type_s = false, callable $home_url = null ) {
-		$this->_cur_url = trailingslashit( strtok( \st\get_current_uri( true ), '?' ) );
+		$this->_cur_url = trailingslashit( strtok( get_current_uri( true ), '?' ) );
 		if ( self::$_is_current_archive_enabled && ( is_single() || is_archive() ) ) {
 			$this->_cur_post_type = get_post_type();
 			if ( is_tax() ) {
