@@ -3,7 +3,7 @@
  * Navigation Tags
  *
  * @author Takuto Yanagida
- * @version 2021-03-30
+ * @version 2021-04-01
  */
 
 namespace wpinc\compass;
@@ -12,35 +12,35 @@ namespace wpinc\compass;
  *
  */
 function the_post_navigation( array $args = array() ) {
-	echo get_the_post_navigation( $args );  // phpcs:disable
+	echo get_the_post_navigation( $args );  // phpcs:ignore
 }
 
 /**
  *
  */
 function the_posts_pagination( array $args = array() ) {
-	echo get_the_posts_pagination( $args );  // phpcs:disable
+	echo get_the_posts_pagination( $args );  // phpcs:ignore
 }
 
 /**
  *
  */
 function the_child_page_navigation( array $args = array() ) {
-	echo get_the_child_page_navigation( $args );  // phpcs:disable
+	echo get_the_child_page_navigation( $args );  // phpcs:ignore
 }
 
 /**
  *
  */
 function the_sibling_page_navigation( array $args = array() ) {
-	echo get_the_sibling_page_navigation( $args );  // phpcs:disable
+	echo get_the_sibling_page_navigation( $args );  // phpcs:ignore
 }
 
 /**
  *
  */
 function the_page_break_navigation( array $args = array() ) {
-	echo get_the_page_break_navigation( $args );  // phpcs:disable
+	echo get_the_page_break_navigation( $args );  // phpcs:ignore
 }
 
 

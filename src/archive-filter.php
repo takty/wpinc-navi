@@ -3,7 +3,7 @@
  * Archive Filter
  *
  * @author Takuto Yanagida
- * @version 2021-03-30
+ * @version 2021-04-01
  */
 
 namespace wpinc\compass;
@@ -91,9 +91,7 @@ function get_custom_archives( $meta_key, $args = array() ) {
 		$key     = "wp_get_archives:$key:$last_changed";
 		$results = wp_cache_get( $key, 'posts' );
 		if ( ! $results ) {
-			// phpcs:disable
-			$results = $wpdb->get_results( $query );
-			// phpcs:enable
+			$results = $wpdb->get_results( $query );  // phpcs:ignore
 			wp_cache_set( $key, $results, 'posts' );
 		}
 		if ( $results ) {
@@ -119,9 +117,7 @@ function get_custom_archives( $meta_key, $args = array() ) {
 
 		$results = wp_cache_get( $key, 'posts' );
 		if ( ! $results ) {
-			// phpcs:disable
-			$results = $wpdb->get_results( $query );
-			// phpcs:enable
+			$results = $wpdb->get_results( $query );  // phpcs:ignore
 			wp_cache_set( $key, $results, 'posts' );
 		}
 		if ( $results ) {
@@ -141,9 +137,7 @@ function get_custom_archives( $meta_key, $args = array() ) {
 		}
 	}
 	if ( $args['echo'] ) {
-		// phpcs:disable
-		echo $output;
-		// phpcs:enable
+		echo $output;  // phpcs:ignore
 	} else {
 		return $output;
 	}
@@ -193,9 +187,7 @@ function the_taxonomy_archive_option( $args = array() ) {
 			$output .= get_archives_link( $url, '— ' . $ct->name, 'option' );
 		}
 	}
-	// phpcs:disable
-	echo $output;
-	// phpcs:enable
+	echo $output;  // phpcs:ignore
 }
 
 
