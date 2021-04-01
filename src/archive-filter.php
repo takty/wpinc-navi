@@ -31,14 +31,17 @@ function the_yearly_archive_select( array $args = array() ) {
 	if ( false === $args['meta_key'] ) {
 		wp_get_archives( $args );
 	} else {
-		get_custom_archives( $args['meta_key'], $args );
+		get_archives_by_meta( $args['meta_key'], $args );
 	}
 	?>
 	</select>
 	<?php
 }
 
-function get_custom_archives( $meta_key, $args = array() ) {
+/**
+ *
+ */
+function get_archives_by_meta( string $meta_key, array $args = array() ) {
 	global $wpdb, $wp_locale;
 	$args = array_merge(
 		array(
@@ -51,6 +54,9 @@ function get_custom_archives( $meta_key, $args = array() ) {
 			'echo'            => 1,
 			'order'           => 'DESC',
 			'post_type'       => 'post',
+			'year'            => get_query_var( 'year' ),
+			'monthnum'        => get_query_var( 'monthnum' ),
+			'day'             => get_query_var( 'day' ),
 		),
 		$args
 	);
@@ -59,18 +65,15 @@ function get_custom_archives( $meta_key, $args = array() ) {
 	if ( ! is_post_type_viewable( $post_type_object ) ) {
 		return;
 	}
-
 	$args['post_type'] = $post_type_object->name;
 
 	if ( '' === $args['type'] ) {
 		$args['type'] = 'monthly';
 	}
-
 	if ( ! empty( $args['limit'] ) ) {
 		$args['limit'] = absint( $args['limit'] );
 		$args['limit'] = ' LIMIT ' . $args['limit'];
 	}
-
 	$order = strtoupper( $args['order'] );
 	if ( 'ASC' !== $order ) {
 		$order = 'DESC';
@@ -85,7 +88,31 @@ function get_custom_archives( $meta_key, $args = array() ) {
 	$last_changed = wp_cache_get_last_changed( 'posts' );
 	$limit        = $args['limit'];
 
-	if ( 'monthly' === $args['type'] ) {
+	if ( 'yearly' === $args['type'] ) {
+		$query   = "SELECT YEAR(meta_value) AS `year`, count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(meta_value) ORDER BY meta_value $order $limit";
+		$key     = md5( $query );
+		$key     = "wp_get_archives:$key:$last_changed";
+		$results = wp_cache_get( $key, 'posts' );
+		if ( ! $results ) {
+			$results = $wpdb->get_results( $query );  // phpcs:ignore
+			wp_cache_set( $key, $results, 'posts' );
+		}
+		if ( $results ) {
+			$after = $args['after'];
+			foreach ( (array) $results as $result ) {
+				$url = get_year_link( $result->year );
+				if ( 'post' !== $args['post_type'] ) {
+					$url = add_query_arg( 'post_type', $args['post_type'], $url );
+				}
+				$text = sprintf( '%d', $result->year );
+				if ( $args['show_post_count'] ) {
+					$args['after'] = '&nbsp;(' . $result->posts . ')' . $after;
+				}
+				$selected = is_archive() && (string) $args['year'] === $result->year;
+				$output  .= get_archives_link( $url, $text, $args['format'], $args['before'], $args['after'], $selected );
+			}
+		}
+	} elseif ( 'monthly' === $args['type'] ) {
 		$query   = "SELECT YEAR(meta_value) AS `year`, MONTH(meta_value) AS `month`, count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(meta_value), MONTH(meta_value) ORDER BY meta_value $order $limit";
 		$key     = md5( $query );
 		$key     = "wp_get_archives:$key:$last_changed";
@@ -106,15 +133,14 @@ function get_custom_archives( $meta_key, $args = array() ) {
 				if ( $args['show_post_count'] ) {
 					$args['after'] = '&nbsp;(' . $result->posts . ')' . $after;
 				}
-				$selected = is_archive() && (string) $parsed_args['year'] === $result->year && (string) $parsed_args['monthnum'] === $result->month;
+				$selected = is_archive() && (string) $args['year'] === $result->year && (string) $args['monthnum'] === $result->month;
 				$output  .= get_archives_link( $url, $text, $args['format'], $args['before'], $args['after'], $selected );
 			}
 		}
-	} elseif ( 'yearly' === $args['type'] ) {
-		$query = "SELECT YEAR(meta_value) AS `year`, count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(meta_value) ORDER BY meta_value $order $limit";
-		$key   = md5( $query );
-		$key   = "wp_get_archives:$key:$last_changed";
-
+    } elseif ( 'daily' === $args['type'] ) {
+		$query   = "SELECT YEAR(meta_value) AS `year`, MONTH(meta_value) AS `month`, DAYOFMONTH(meta_value) AS `dayofmonth`, count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(meta_value), MONTH(meta_value), DAYOFMONTH(meta_value) ORDER BY meta_value $order $limit";
+		$key     = md5( $query );
+		$key     = "wp_get_archives:$key:$last_changed";
 		$results = wp_cache_get( $key, 'posts' );
 		if ( ! $results ) {
 			$results = $wpdb->get_results( $query );  // phpcs:ignore
@@ -123,15 +149,16 @@ function get_custom_archives( $meta_key, $args = array() ) {
 		if ( $results ) {
 			$after = $args['after'];
 			foreach ( (array) $results as $result ) {
-				$url = get_year_link( $result->year );
+				$url = get_day_link( $result->year, $result->month, $result->dayofmonth );
 				if ( 'post' !== $args['post_type'] ) {
 					$url = add_query_arg( 'post_type', $args['post_type'], $url );
 				}
-				$text = sprintf( '%d', $result->year );
+				$date = sprintf( '%1$d-%2$02d-%3$02d 00:00:00', $result->year, $result->month, $result->dayofmonth );
+				$text = mysql2date( get_option( 'date_format' ), $date );
 				if ( $args['show_post_count'] ) {
 					$args['after'] = '&nbsp;(' . $result->posts . ')' . $after;
 				}
-				$selected = is_archive() && (string) $parsed_args['year'] === $result->year;
+				$selected = is_archive() && (string) $args['year'] === $result->year && (string) $args['monthnum'] === $result->month && (string) $args['day'] === $result->dayofmonth;
 				$output  .= get_archives_link( $url, $text, $args['format'], $args['before'], $args['after'], $selected );
 			}
 		}
@@ -195,7 +222,7 @@ function the_taxonomy_archive_option( $args = array() ) {
 
 
 /**
- * The callback function for 'get_archive_link' filter.
+ * The callback function for 'get_archives_link' filter.
  *
  * @param string $link_html The archive HTML link content.
  * @param string $url       URL to archive.
