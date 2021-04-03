@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-01
+ * @version 2021-04-04
  */
 
 namespace wpinc\navi;
@@ -14,7 +14,7 @@ require_once __DIR__ . '/page-break.php';
 /**
  * The.
  *
- * @param array $args The.
+ * @param array $args (Optional) The.
  */
 function the_post_navigation( array $args = array() ) {
 	echo get_the_post_navigation( $args );  // phpcs:ignore
@@ -23,7 +23,7 @@ function the_post_navigation( array $args = array() ) {
 /**
  * The.
  *
- * @param array $args The.
+ * @param array $args (Optional) The.
  */
 function the_posts_pagination( array $args = array() ) {
 	echo get_the_posts_pagination( $args );  // phpcs:ignore
@@ -32,7 +32,7 @@ function the_posts_pagination( array $args = array() ) {
 /**
  * The.
  *
- * @param array $args The.
+ * @param array $args (Optional) The.
  */
 function the_child_page_navigation( array $args = array() ) {
 	echo get_the_child_page_navigation( $args );  // phpcs:ignore
@@ -41,7 +41,7 @@ function the_child_page_navigation( array $args = array() ) {
 /**
  * The.
  *
- * @param array $args The.
+ * @param array $args (Optional) The.
  */
 function the_sibling_page_navigation( array $args = array() ) {
 	echo get_the_sibling_page_navigation( $args );  // phpcs:ignore
@@ -50,7 +50,7 @@ function the_sibling_page_navigation( array $args = array() ) {
 /**
  * The.
  *
- * @param array $args The.
+ * @param array $args (Optional) The.
  */
 function the_page_break_navigation( array $args = array() ) {
 	echo get_the_page_break_navigation( $args );  // phpcs:ignore
@@ -63,7 +63,7 @@ function the_page_break_navigation( array $args = array() ) {
 /**
  * The.
  *
- * @param array $args The.
+ * @param array $args (Optional) The.
  */
 function get_the_post_navigation( $args = array() ) {
 	$args = array_merge(
@@ -360,6 +360,11 @@ function get_the_sibling_page_navigation( $args = array() ) {
 // -----------------------------------------------------------------------------
 
 
+/**
+ *
+ *
+ * @param array $args (Optional) The.
+ */
 function get_the_page_break_navigation( array $args = array() ) {
 	$args += array(
 		'before' => '',

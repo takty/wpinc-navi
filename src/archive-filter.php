@@ -12,7 +12,7 @@ namespace wpinc\navi;
 /**
  * Display yearly archive select.
  *
- * @param array $args Array of arguments. See get_date_archives() for information on accepted arguments.
+ * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_yearly_archive_select( array $args = array() ) {
 	$args = array_merge(
@@ -36,7 +36,7 @@ function the_yearly_archive_select( array $args = array() ) {
 /**
  * Display taxonomy archive select.
  *
- * @param array $args Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
+ * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archive_select( array $args = array() ) {
 	$args = array_merge(
@@ -63,7 +63,7 @@ function the_taxonomy_archive_select( array $args = array() ) {
 /**
  * Display date archive links based on type and format.
  *
- * @param array $args Array of arguments. See get_date_archives() for information on accepted arguments.
+ * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_date_archives( array $args = array() ) {
 	echo get_date_archives( $args );  // phpcs:ignore
@@ -73,7 +73,7 @@ function the_date_archives( array $args = array() ) {
  * Retrieve date archive links based on type and format.
  *
  * @param array $args {
- *     Array of type, format, and term query parameters.
+ *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     $before          Content to prepend to the output. Default is ''.
  *     @type string     $after           Content to append to the output. Default is ''.
@@ -133,7 +133,7 @@ function get_date_archives( array $args = array() ): string {
  * Retrieve date archive link data.
  *
  * @param array $args {
- *     Array of type, format, and date query parameters.
+ *     (Optional) Array of type, format, and date query parameters.
  *
  *     @type string     $type            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
  *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
@@ -269,7 +269,7 @@ function get_date_archive_links( array $args = array() ): array {
 /**
  * Display taxonomy archive links based on type and format.
  *
- * @param array $args Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
+ * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archives( array $args = array() ) {
 	echo get_date_archives( $args );  // phpcs:ignore
@@ -279,7 +279,7 @@ function the_taxonomy_archives( array $args = array() ) {
  * Retrieve taxonomy archive links based on type and format.
  *
  * @param array $args {
- *     Array of type, format, and term query parameters.
+ *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     $taxonomy        Taxonomy name to which results should be limited.
  *     @type int        $parent          Parent term ID to retrieve direct-child terms of. Default 0.
@@ -365,7 +365,7 @@ function get_taxonomy_archives( $args = array() ): string {
  * Retrieve taxonomy archive link data.
  *
  * @param array $args {
- *     Array of type, format, and term query parameters.
+ *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     $taxonomy        Taxonomy name to which results should be limited.
  *     @type bool       $hide_empty      Whether to hide terms not assigned to any posts. Default true.
