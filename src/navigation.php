@@ -356,6 +356,19 @@ function get_the_sibling_page_navigation( $args = array() ) {
 	return ob_get_clean();
 }
 
+function the_post_list_item( $post, $link_class = '', $item_class = '', $current = false ) {
+	$link = esc_url( get_permalink( $post->ID ) );
+	$title = esc_html( get_the_title( $post->ID ) );
+
+	$item_class = empty( $item_class ) ? $current : ($item_class . ' ' . $current);
+	$li_class = ( $item_class ) ? ' class="' . $item_class . '"' : '';
+	if ( empty( $link_class ) ) {
+		echo "<li$li_class><a href=\"$link\">$title</a></li>";
+	} else {
+		echo "<li$li_class><a class=\"$link_class\" href=\"$link\">$title</a></li>";
+	}
+}
+
 
 // -----------------------------------------------------------------------------
 
