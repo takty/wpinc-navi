@@ -2,12 +2,12 @@
 /**
  * Archive Filter
  *
- * @package Wpinc Compass
+ * @package Wpinc Navi
  * @author Takuto Yanagida
  * @version 2021-04-02
  */
 
-namespace wpinc\compass;
+namespace wpinc\navi;
 
 /**
  * Display yearly archive select.

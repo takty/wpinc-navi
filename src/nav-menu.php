@@ -6,7 +6,7 @@
  * @version 2021-03-23
  */
 
-namespace wpinc\compass;
+namespace wpinc\navi;
 
 function get_current_uri( $raw = false ) {
 	$host = $_SERVER['HTTP_HOST'];
@@ -47,7 +47,7 @@ class NavMenu {
 
 	public static function set_cache_enabled( $flag ) {
 		self::$_is_cache_enabled = $flag;
-		add_action( 'wp_update_nav_menu', array( '\wpinc\compass\NavMenu', '_cb_wp_update_nav_menu' ), 10, 2 );
+		add_action( 'wp_update_nav_menu', array( '\wpinc\navi\NavMenu', '_cb_wp_update_nav_menu' ), 10, 2 );
 	}
 
 	public static function set_current_archive_enabled( $flag ) {

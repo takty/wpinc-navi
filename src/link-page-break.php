@@ -2,12 +2,12 @@
 /**
  * Page Break
  *
- * @package Wpinc Compass
+ * @package Wpinc Navi
  * @author Takuto Yanagida
  * @version 2021-04-02
  */
 
-namespace wpinc\compass\link_page_break;
+namespace wpinc\navi\link_page_break;
 
 require_once __DIR__ . '/page-break.php';
 
@@ -15,7 +15,7 @@ require_once __DIR__ . '/page-break.php';
  * Initialize next and previous link tags.
  */
 function initialize() {
-	add_action( 'wp_head', '\wpinc\compass\page_break\_cb_wp_head' );
+	add_action( 'wp_head', '\wpinc\navi\page_break\_cb_wp_head' );
 }
 
 /**

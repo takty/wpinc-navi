@@ -2,12 +2,12 @@
 /**
  * Navigation Tags
  *
- * @package Wpinc Compass
+ * @package Wpinc Navi
  * @author Takuto Yanagida
  * @version 2021-04-01
  */
 
-namespace wpinc\compass;
+namespace wpinc\navi;
 
 require_once __DIR__ . '/page-break.php';
 
@@ -373,7 +373,7 @@ function get_the_page_break_navigation( array $args = array() ) {
 	$output = '<nav class="navigation page-break-navigation"><div class="nav-links">';
 	for ( $i = 1; $i <= $numpages; ++$i ) {
 		if ( $i !== $page ) {
-			$_url = esc_url( \wpinc\compass\page_break\get_page_break_link( $i, $post ) );
+			$_url = esc_url( \wpinc\navi\page_break\get_page_break_link( $i, $post ) );
 
 			$output .= "<a class=\"nav-page-break-link\" href=\"$_url\">$i</a>";
 		} else {

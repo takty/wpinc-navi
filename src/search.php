@@ -6,7 +6,7 @@
  * @version 2021-03-30
  */
 
-namespace wpinc\compass;
+namespace wpinc\navi;
 
 function mb_trim( $str ) {
 	return preg_replace( '/\A[\p{C}\p{Z}]++|[\p{C}\p{Z}]++\z/u', '', $str );
@@ -383,7 +383,7 @@ class Search {
 				$ret[] = $term;
 				continue;
 			}
-			$sts = array_map( '\wpinc\compass\mb_trim', mb_split( "[「『（［｛〈《【〔〖〘〚＜」』）］｝〉》】〕〗〙〛＞、，。．？！：・]+", $term ) );
+			$sts = array_map( '\wpinc\navi\mb_trim', mb_split( "[「『（［｛〈《【〔〖〘〚＜」』）］｝〉》】〕〗〙〛＞、，。．？！：・]+", $term ) );
 			foreach ( $sts as $t ) {
 				if ( empty( $t ) ) {
 					continue;

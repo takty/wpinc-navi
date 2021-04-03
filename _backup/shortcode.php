@@ -2,12 +2,12 @@
 /**
  * Shortcode
  *
- * @package Wpinc Compass
+ * @package Wpinc Navi
  * @author Takuto Yanagida
  * @version 2021-04-02
  */
 
-namespace wpinc\compass\shortcode;
+namespace wpinc\navi\shortcode;
 
 require_once __DIR__ . '/navigation.php';
 
@@ -15,8 +15,8 @@ require_once __DIR__ . '/navigation.php';
  * The.
  */
 function add_page_navigation_shortcode() {
-	add_shortcode( 'child-page-nav', '\wpinc\compass\shortcode\_sc_child_page_nav' );
-	add_shortcode( 'sibling-page-nav', '\wpinc\compass\shortcode\_sc_sibling_page_nav' );
+	add_shortcode( 'child-page-nav', '\wpinc\navi\shortcode\_sc_child_page_nav' );
+	add_shortcode( 'sibling-page-nav', '\wpinc\navi\shortcode\_sc_sibling_page_nav' );
 }
 
 /**
@@ -26,7 +26,7 @@ function add_page_navigation_shortcode() {
  */
 function _sc_child_page_nav( array $atts ) {
 	$atts = shortcode_atts( array( 'style' => false ), $atts );
-	return \wpinc\compass\navigation\get_the_child_page_navigation( array( 'class' => $atts['style'] ) );
+	return \wpinc\navi\navigation\get_the_child_page_navigation( array( 'class' => $atts['style'] ) );
 }
 
 /**
@@ -36,7 +36,7 @@ function _sc_child_page_nav( array $atts ) {
  */
 function _sc_sibling_page_nav( array $atts ) {
 	$atts = shortcode_atts( array( 'style' => false ), $atts );
-	return \wpinc\compass\navigation\get_the_sibling_page_navigation( array( 'class' => $atts['style'] ) );
+	return \wpinc\navi\navigation\get_the_sibling_page_navigation( array( 'class' => $atts['style'] ) );
 }
 
 
@@ -47,22 +47,22 @@ function _sc_sibling_page_nav( array $atts ) {
  * The.
  */
 function add_youtube_shortcode() {
-	add_shortcode( 'youtube', '\wpinc\compass\shortcode\_sc_youtube' );
+	add_shortcode( 'youtube', '\wpinc\navi\shortcode\_sc_youtube' );
 }
 
 /**
  * The.
  */
 function add_vimeo_shortcode() {
-	add_shortcode( 'vimeo', '\wpinc\compass\shortcode\_sc_vimeo' );
+	add_shortcode( 'vimeo', '\wpinc\navi\shortcode\_sc_vimeo' );
 }
 
 /**
  * The.
  */
 function add_instagram_shortcode() {
-	add_shortcode( 'instagram', '\wpinc\compass\shortcode\_sc_instagram' );
-	add_action( 'wp_enqueue_scripts', '\wpinc\compass\shortcode\_cb_wp_enqueue_scripts_instagram' );
+	add_shortcode( 'instagram', '\wpinc\navi\shortcode\_sc_instagram' );
+	add_action( 'wp_enqueue_scripts', '\wpinc\navi\shortcode\_cb_wp_enqueue_scripts_instagram' );
 }
 
 /**
@@ -191,7 +191,7 @@ function add_post_type_list_shortcode( $post_type, $taxonomy = false, $args = ar
 	}
 	$args = array_merge(
 		array(
-			'year_date_function' => '\wpinc\compass\shortcode\get_item_year_date_news',
+			'year_date_function' => '\wpinc\navi\shortcode\get_item_year_date_news',
 			'year_format'        => false,
 		),
 		$args

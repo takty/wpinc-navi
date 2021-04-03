@@ -2,12 +2,12 @@
 /**
  * Page Break
  *
- * @package Wpinc Compass
+ * @package Wpinc Navi
  * @author Takuto Yanagida
  * @version 2021-04-02
  */
 
-namespace wpinc\compass\page_break;
+namespace wpinc\navi\page_break;
 
 /**
  * Retrieve page link url. Based on _wp_link_page().

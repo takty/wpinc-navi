@@ -1,1 +1,1 @@
-# wpinc-compass
+# wpinc-navi
