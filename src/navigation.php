@@ -2,42 +2,55 @@
 /**
  * Navigation Tags
  *
+ * @package Wpinc Compass
  * @author Takuto Yanagida
  * @version 2021-04-01
  */
 
 namespace wpinc\compass;
 
+require_once __DIR__ . '/page-break.php';
+
 /**
+ * The.
  *
+ * @param array $args The.
  */
 function the_post_navigation( array $args = array() ) {
 	echo get_the_post_navigation( $args );  // phpcs:ignore
 }
 
 /**
+ * The.
  *
+ * @param array $args The.
  */
 function the_posts_pagination( array $args = array() ) {
 	echo get_the_posts_pagination( $args );  // phpcs:ignore
 }
 
 /**
+ * The.
  *
+ * @param array $args The.
  */
 function the_child_page_navigation( array $args = array() ) {
 	echo get_the_child_page_navigation( $args );  // phpcs:ignore
 }
 
 /**
+ * The.
  *
+ * @param array $args The.
  */
 function the_sibling_page_navigation( array $args = array() ) {
 	echo get_the_sibling_page_navigation( $args );  // phpcs:ignore
 }
 
 /**
+ * The.
  *
+ * @param array $args The.
  */
 function the_page_break_navigation( array $args = array() ) {
 	echo get_the_page_break_navigation( $args );  // phpcs:ignore
@@ -47,6 +60,11 @@ function the_page_break_navigation( array $args = array() ) {
 // -----------------------------------------------------------------------------
 
 
+/**
+ * The.
+ *
+ * @param array $args The.
+ */
 function get_the_post_navigation( $args = array() ) {
 	$args = array_merge(
 		array(
