@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-02
+ * @version 2021-04-04
  */
 
 namespace wpinc\navi;
@@ -75,9 +75,11 @@ function the_date_archives( array $args = array() ) {
  * @param array $args {
  *     Array of type, format, and term query parameters.
  *
- *     @type string     $format          (Optional) Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     $before          (Optional) Content to prepend to the description. Default value: ''
- *     @type string     $after           (Optional) Content to append to the description. Default value: ''
+ *     @type string     $before          Content to prepend to the output. Default is ''.
+ *     @type string     $after           Content to append to the output. Default is ''.
+ *     @type string     $format          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     $item_before     Content to prepend to each link. Default value: ''
+ *     @type string     $item_after      Content to append to each link. Default value: ''
  *     @type bool       $show_post_count Whether to display the post count alongside the link. Default false.
  *     @type string     $type            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
  *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
@@ -86,7 +88,7 @@ function the_date_archives( array $args = array() ) {
  *     @type string     $year            Year. Default current year.
  *     @type string     $monthnum        Month number. Default current month number.
  *     @type string     $day             Day. Default current day.
- *     @type string     $meta_key        (Optional) Meta key used instead of post_date.
+ *     @type string     $meta_key        Meta key used instead of post_date.
  * }
  * @return array String of links.
  */
@@ -94,9 +96,11 @@ function get_date_archives( array $args = array() ): string {
 	global $wpdb, $wp_locale;
 	$args = array_merge(
 		array(
-			'format'          => 'html',
 			'before'          => '',
 			'after'           => '',
+			'format'          => 'html',
+			'item_before'     => '',
+			'item_after'      => '',
 			'show_post_count' => false,
 
 			'type'            => 'monthly',
@@ -119,10 +123,10 @@ function get_date_archives( array $args = array() ): string {
 		$count = $link['count'];
 		$sel   = $link['selected'];
 
-		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['after']}" : $args['after'];
-		$output .= get_archives_link( $url, $text, $args['format'], $args['before'], $args['after'], $sel );
+		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
+		$output .= get_archives_link( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
 	}
-	return $output;
+	return $args['before'] . $output . $args['after'];
 }
 
 /**
@@ -138,7 +142,7 @@ function get_date_archives( array $args = array() ): string {
  *     @type string     $year            Year. Default current year.
  *     @type string     $monthnum        Month number. Default current month number.
  *     @type string     $day             Day. Default current day.
- *     @type string     $meta_key        (Optional) Meta key used instead of post_date.
+ *     @type string     $meta_key        Meta key used instead of post_date.
  * }
  * @return array Link data.
  */
@@ -195,7 +199,7 @@ function get_date_archive_links( array $args = array() ): array {
 			wp_cache_set( $key, $rs, 'posts' );
 		}
 		if ( $rs ) {
-			$after = $args['after'];
+			$after = $args['item_after'];
 			foreach ( (array) $rs as $r ) {
 				$url = get_year_link( $r->year );
 				if ( 'post' !== $args['post_type'] ) {
@@ -217,7 +221,7 @@ function get_date_archive_links( array $args = array() ): array {
 			wp_cache_set( $key, $rs, 'posts' );
 		}
 		if ( $rs ) {
-			$after = $args['after'];
+			$after = $args['item_after'];
 			foreach ( (array) $rs as $r ) {
 				$url = get_month_link( $r->year, $r->month );
 				if ( 'post' !== $args['post_type'] ) {
@@ -240,7 +244,7 @@ function get_date_archive_links( array $args = array() ): array {
 			wp_cache_set( $key, $rs, 'posts' );
 		}
 		if ( $rs ) {
-			$after = $args['after'];
+			$after = $args['item_after'];
 			foreach ( (array) $rs as $r ) {
 				$url = get_day_link( $r->year, $r->month, $r->dayofmonth );
 				if ( 'post' !== $args['post_type'] ) {
@@ -280,9 +284,11 @@ function the_taxonomy_archives( array $args = array() ) {
  *     @type string     $taxonomy        Taxonomy name to which results should be limited.
  *     @type int        $parent          Parent term ID to retrieve direct-child terms of. Default 0.
  *     @type bool       $hierarchical    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
- *     @type string     $format          (Optional) Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     $before          (Optional) Content to prepend to the description. Default value: ''
- *     @type string     $after           (Optional) Content to append to the description. Default value: ''
+ *     @type string     $before          Content to prepend to the output. Default is ''.
+ *     @type string     $after           Content to append to the output. Default is ''.
+ *     @type string     $format          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     $item_before     Content to prepend to each link. Default value: ''
+ *     @type string     $item_after      Content to append to each link. Default value: ''
  *     @type bool       $show_post_count Whether to display the post count alongside the link. Default false.
  *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
  *     @type string     $order           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
@@ -298,9 +304,11 @@ function get_taxonomy_archives( $args = array() ): string {
 			'parent'          => 0,
 			'hierarchical'    => false,
 
-			'format'          => 'html',
 			'before'          => '',
 			'after'           => '',
+			'format'          => 'html',
+			'item_before'     => '',
+			'item_after'      => '',
 			'show_post_count' => false,
 
 			'limit'           => '',
@@ -312,7 +320,7 @@ function get_taxonomy_archives( $args = array() ): string {
 	);
 
 	$gt_args = $args;
-	foreach ( array( 'format', 'before', 'after', 'show_post_count', 'limit', 'order', 'post_type', 'term' ) as $key ) {
+	foreach ( array( 'format', 'item_before', 'item_after', 'show_post_count', 'limit', 'order', 'post_type', 'term' ) as $key ) {
 		unset( $gt_args[ $key ] );
 	}
 
@@ -330,8 +338,8 @@ function get_taxonomy_archives( $args = array() ): string {
 		$count = $link['count'];
 		$sel   = $link['selected'];
 
-		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['after']}" : $args['after'];
-		$output .= get_archives_link( $url, $text, $args['format'], $args['before'], $args['after'], $sel );
+		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
+		$output .= get_archives_link( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
 
 		if ( $args['hierarchical'] ) {
 			$gt_args['parent'] = $t->term_id;
@@ -345,12 +353,12 @@ function get_taxonomy_archives( $args = array() ): string {
 				$count = $links[ $ct->slug ]['count'];
 				$sel   = $links[ $ct->slug ]['selected'];
 
-				$after   = $args['show_post_count'] ? "&nbsp;($count){$args['after']}" : $args['after'];
-				$output .= get_archives_link( $url, '— ' . $text, $args['format'], $args['before'], $args['after'], $sel );
+				$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
+				$output .= get_archives_link( $url, '— ' . $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
 			}
 		}
 	}
-	return $output;
+	return $args['before'] . $output . $args['after'];
 }
 
 /**
@@ -363,9 +371,9 @@ function get_taxonomy_archives( $args = array() ): string {
  *     @type bool       $hide_empty      Whether to hide terms not assigned to any posts. Default true.
  *     @type int        $parent          Parent term ID to retrieve direct-child terms of. Default 0.
  *     @type bool       $hierarchical    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
- *     @type string     $format          (Optional) Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     $before          (Optional) Content to prepend to the description. Default value: ''
- *     @type string     $after           (Optional) Content to append to the description. Default value: ''
+ *     @type string     $format          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     $before          Content to prepend to the description. Default value: ''
+ *     @type string     $after           Content to append to the description. Default value: ''
  *     @type bool       $show_post_count Whether to display the post count alongside the link. Default false.
  *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
  *     @type string     $order           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
@@ -422,7 +430,7 @@ function get_taxonomy_archive_links( $args = array() ): array {
 		wp_cache_set( $key, $rs, 'posts' );
 	}
 	if ( $rs ) {
-		$after = $args['after'];
+		$after = $args['item_after'];
 		foreach ( (array) $rs as $r ) {
 			$t = get_term_by( 'term_taxonomy_id', (int) $r->term_taxonomy_id, $args['taxonomy'] );
 
