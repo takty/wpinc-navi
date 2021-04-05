@@ -15,9 +15,10 @@ namespace wpinc\navi;
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_yearly_archive_select( array $args = array() ) {
-	$js   = 'document.location.href=this.value;';
-	$dt   = $args['default_title'] ?? __( 'Year' );
-	$defs = array(
+	$js = 'document.location.href=this.value;';
+	$dt = $args['default_title'] ?? __( 'Year' );
+
+	$args += array(
 		'before'    => "<select onchange=\"$js\">\n<option value=\"#\">" . esc_html( $dt ) . "</option>\n",
 		'after'     => '</select>',
 		'post_type' => 'post',
@@ -25,7 +26,6 @@ function the_yearly_archive_select( array $args = array() ) {
 		'format'    => 'option',
 		'meta_key'  => '',  // phpcs:ignore
 	);
-	$args = array_merge( $defs, $args );
 	the_date_archives( $args );
 }
 
@@ -35,16 +35,16 @@ function the_yearly_archive_select( array $args = array() ) {
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archive_select( array $args = array() ) {
-	$js   = 'document.location.href=this.value;';
-	$dt   = $args['default_title'] ?? __( 'Year' );
-	$defs = array(
+	$js = 'document.location.href=this.value;';
+	$dt = $args['default_title'] ?? __( 'Year' );
+
+	$args += array(
 		'before'    => "<select onchange=\"$js\">\n<option value=\"#\">" . esc_html( $dt ) . "</option>\n",
 		'after'     => '</select>',
 		'post_type' => 'post',
 		'taxonomy'  => 'category',
 		'format'    => 'option',
 	);
-	$args = array_merge( $defs, $args );
 	the_taxonomy_archives( $args );
 }
 
@@ -86,7 +86,7 @@ function the_date_archives( array $args = array() ) {
  */
 function get_date_archives( array $args = array() ): string {
 	global $wpdb, $wp_locale;
-	$defs = array(
+	$args += array(
 		'before'          => '',
 		'after'           => '',
 		'format'          => 'html',
@@ -103,7 +103,6 @@ function get_date_archives( array $args = array() ): string {
 		'day'             => get_query_var( 'day' ),
 		'meta_key'        => '',  // phpcs:ignore
 	);
-	$args = array_merge( $defs, $args );
 
 	$output = '';
 
@@ -138,7 +137,7 @@ function get_date_archives( array $args = array() ): string {
  */
 function get_date_archive_links( array $args = array() ): array {
 	global $wpdb, $wp_locale;
-	$defs = array(
+	$args += array(
 		'type'      => 'monthly',
 		'limit'     => '',
 		'order'     => 'DESC',
@@ -148,7 +147,6 @@ function get_date_archive_links( array $args = array() ): array {
 		'day'       => get_query_var( 'day' ),
 		'meta_key'  => '',  // phpcs:ignore
 	);
-	$args = array_merge( $defs, $args );
 
 	$meta_key = $args['meta_key'];
 	$column   = empty( $meta_key ) ? 'post_date' : 'meta_value';
@@ -286,7 +284,7 @@ function the_taxonomy_archives( array $args = array() ) {
  * @return array String of links.
  */
 function get_taxonomy_archives( $args = array() ): string {
-	$defs = array(
+	$args += array(
 		'taxonomy'        => 'category',
 		'parent'          => 0,
 		'hierarchical'    => false,
@@ -303,7 +301,6 @@ function get_taxonomy_archives( $args = array() ): string {
 		'post_type'       => 'post',
 		'term'            => get_query_var( 'term' ),
 	);
-	$args = array_merge( $defs, $args );
 
 	$gt_args = $args;
 	foreach ( array( 'format', 'item_before', 'item_after', 'show_post_count', 'limit', 'order', 'post_type', 'term' ) as $key ) {
@@ -370,14 +367,13 @@ function get_taxonomy_archives( $args = array() ): string {
  */
 function get_taxonomy_archive_links( $args = array() ): array {
 	global $wpdb;
-	$defs = array(
+	$args += array(
 		'taxonomy'  => 'category',
 		'limit'     => '',
 		'order'     => 'DESC',
 		'post_type' => 'post',
 		'term'      => get_query_var( 'term' ),
 	);
-	$args = array_merge( $defs, $args );
 
 	$post_type_object = get_post_type_object( $args['post_type'] );
 	if ( ! is_post_type_viewable( $post_type_object ) ) {

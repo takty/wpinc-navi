@@ -189,11 +189,10 @@ function add_post_type_list_shortcode( $post_type, $taxonomy = false, $args = ar
 	if ( ! is_array( $args ) ) {  // for backward compatibility.
 		$args = array( 'year_date_function' => $args );
 	}
-	$defs = array(
+	$args += array(
 		'year_date_function' => '\wpinc\navi\shortcode\get_item_year_date_news',
 		'year_format'        => false,
 	);
-	$args = array_merge( $defs, $args );
 	add_shortcode(
 		$post_type . '-list',
 		function ( $atts, $content ) use ( $post_type, $taxonomy, $args ) {

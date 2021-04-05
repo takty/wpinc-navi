@@ -49,7 +49,7 @@ function the_page_break_navigation( array $args = array() ) {
  * @return string The.
  */
 function get_the_post_navigation( array $args = array() ): string {
-	$defs = array(
+	$args += array(
 		'before'             => '',
 		'after'              => '',
 		'prev_text'          => '%title',
@@ -62,7 +62,7 @@ function get_the_post_navigation( array $args = array() ): string {
 		'has_list_link'      => false,
 		'link_list_pos'      => 'center',
 	);
-	$args = array_merge( $defs, $args );
+
 	$prev = get_previous_post_link(
 		'<div class="nav-previous">%link</div>',
 		$args['prev_text'],
@@ -301,7 +301,7 @@ function get_the_page_break_navigation( array $args = array() ): string {
 	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
-	$defs = array(
+	$args += array(
 		'before'             => '',
 		'after'              => '',
 		'prev_text'          => '',
@@ -310,7 +310,7 @@ function get_the_page_break_navigation( array $args = array() ): string {
 		'aria_label'         => __( 'Page breaks' ),
 		'class'              => 'page-break-navigation',
 	);
-	$args = array_merge( $defs, $args );
+
 	$prev = _get_adjacent_page_break_link( $args['prev_text'], true );
 	$next = _get_adjacent_page_break_link( $args['next_text'], false );
 

@@ -46,7 +46,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
-	$defs = array(
+	$args += array(
 		'before'                   => '',
 		'after'                    => '',
 		'screen_reader_text'       => __( 'Child page navigation' ),
@@ -54,7 +54,6 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 		'class'                    => 'child-page-navigation',
 		'hide_page_with_thumbnail' => false,
 	);
-	$args = array_merge( $defs, $args );
 
 	$ps = _filter_posts( _get_child_pages( $query_args ), $args );
 	if ( count( $ps ) === 0 ) {
@@ -78,7 +77,7 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
-	$defs = array(
+	$args += array(
 		'before'                   => '',
 		'after'                    => '',
 		'screen_reader_text'       => __( 'Sibling page navigation' ),
@@ -86,7 +85,6 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 		'class'                    => 'sibling-page-navigation',
 		'hide_page_with_thumbnail' => false,
 	);
-	$args = array_merge( $defs, $args );
 
 	$ps = _filter_posts( _get_sibling_pages( $query_args ), $args );
 	if ( count( $ps ) === 0 ) {
@@ -139,15 +137,14 @@ function _filter_posts( array $ps, array $args ): array {
  * @return array Array of post objects.
  */
 function _get_child_pages( array $args = array() ): array {
-	$parent_id = get_the_ID();
-	$defs      = array(
-		'post_parent'    => $parent_id,
+	$args += array(
+		'post_parent'    => get_the_ID(),
 		'posts_per_page' => -1,
 		'post_type'      => 'page',
 		'orderby'        => 'menu_order',
 		'order'          => 'asc',
 	);
-	return get_posts( array_merge( $defs, $args ) );
+	return get_posts( $args );
 }
 
 /**
@@ -159,16 +156,15 @@ function _get_child_pages( array $args = array() ): array {
  * @return array Array of post objects.
  */
 function _get_sibling_pages( array $args = array() ): array {
-	$post      = get_post( get_the_ID() );
-	$parent_id = empty( $post ) ? 0 : $post->post_parent;
-	$defs      = array(
-		'post_parent'    => $parent_id,
+	$post  = get_post( get_the_ID() );
+	$args += array(
+		'post_parent'    => empty( $post ) ? 0 : $post->post_parent,
 		'posts_per_page' => -1,
 		'post_type'      => 'page',
 		'orderby'        => 'menu_order',
 		'order'          => 'asc',
 	);
-	return get_posts( array_merge( $defs, $args ) );
+	return get_posts( $args );
 }
 
 /**
