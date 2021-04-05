@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-04
+ * @version 2021-04-05
  */
 
 namespace wpinc\navi;
@@ -15,22 +15,18 @@ namespace wpinc\navi;
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_yearly_archive_select( array $args = array() ) {
-	$args = array_merge(
-		array(
-			'post_type'     => 'post',
-			'type'          => 'yearly',
-			'format'        => 'option',
-			'default_title' => __( 'Year' ),
-			'meta_key'      => '',  // phpcs:ignore
-		),
-		$args
+	$js   = 'document.location.href=this.value;';
+	$dt   = $args['default_title'] ?? __( 'Year' );
+	$defs = array(
+		'before'    => "<select onchange=\"$js\">\n<option value=\"#\">" . esc_html( $dt ) . "</option>\n",
+		'after'     => '</select>',
+		'post_type' => 'post',
+		'type'      => 'yearly',
+		'format'    => 'option',
+		'meta_key'  => '',  // phpcs:ignore
 	);
-	?>
-	<select onchange="document.location.href=this.value;">
-		<option value="#"><?php echo esc_html( $args['default_title'] ); ?></option>
-		<?php the_date_archives( $args ); ?>
-	</select>
-	<?php
+	$args = array_merge( $defs, $args );
+	the_date_archives( $args );
 }
 
 /**
@@ -39,21 +35,17 @@ function the_yearly_archive_select( array $args = array() ) {
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archive_select( array $args = array() ) {
-	$args = array_merge(
-		array(
-			'post_type'     => 'post',
-			'taxonomy'      => 'category',
-			'format'        => 'option',
-			'default_title' => __( 'Category' ),
-		),
-		$args
+	$js   = 'document.location.href=this.value;';
+	$dt   = $args['default_title'] ?? __( 'Year' );
+	$defs = array(
+		'before'    => "<select onchange=\"$js\">\n<option value=\"#\">" . esc_html( $dt ) . "</option>\n",
+		'after'     => '</select>',
+		'post_type' => 'post',
+		'taxonomy'  => 'category',
+		'format'    => 'option',
 	);
-	?>
-	<select onchange="document.location.href=this.value;">
-		<option value="#"><?php echo esc_html( $args['default_title'] ); ?></option>
-		<?php the_taxonomy_archives( $args ); ?>
-	</select>
-	<?php
+	$args = array_merge( $defs, $args );
+	the_taxonomy_archives( $args );
 }
 
 
@@ -75,45 +67,43 @@ function the_date_archives( array $args = array() ) {
  * @param array $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
- *     @type string     $before          Content to prepend to the output. Default is ''.
- *     @type string     $after           Content to append to the output. Default is ''.
- *     @type string     $format          Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     $item_before     Content to prepend to each link. Default value: ''
- *     @type string     $item_after      Content to append to each link. Default value: ''
- *     @type bool       $show_post_count Whether to display the post count alongside the link. Default false.
- *     @type string     $type            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
- *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
- *     @type string     $order           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
- *     @type string     $post_type       Post type. Default 'post'.
- *     @type string     $year            Year. Default current year.
- *     @type string     $monthnum        Month number. Default current month number.
- *     @type string     $day             Day. Default current day.
- *     @type string     $meta_key        Meta key used instead of post_date.
+ *     @type string     'before'          Content to prepend to the output. Default ''.
+ *     @type string     'after'           Content to append to the output. Default ''.
+ *     @type string     'format'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     'item_before'     Content to prepend to each link. Default value: ''
+ *     @type string     'item_after'      Content to append to each link. Default value: ''
+ *     @type bool       'show_post_count' Whether to display the post count alongside the link. Default false.
+ *     @type string     'type'            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
+ *     @type string|int 'limit'           Number of links to limit the query to. Default empty (no limit).
+ *     @type string     'order'           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
+ *     @type string     'post_type'       Post type. Default 'post'.
+ *     @type string     'year'            Year. Default current year.
+ *     @type string     'monthnum'        Month number. Default current month number.
+ *     @type string     'day'             Day. Default current day.
+ *     @type string     'meta_key'        Meta key used instead of post_date.
  * }
  * @return array String of links.
  */
 function get_date_archives( array $args = array() ): string {
 	global $wpdb, $wp_locale;
-	$args = array_merge(
-		array(
-			'before'          => '',
-			'after'           => '',
-			'format'          => 'html',
-			'item_before'     => '',
-			'item_after'      => '',
-			'show_post_count' => false,
+	$defs = array(
+		'before'          => '',
+		'after'           => '',
+		'format'          => 'html',
+		'item_before'     => '',
+		'item_after'      => '',
+		'show_post_count' => false,
 
-			'type'            => 'monthly',
-			'limit'           => '',
-			'order'           => 'DESC',
-			'post_type'       => 'post',
-			'year'            => get_query_var( 'year' ),
-			'monthnum'        => get_query_var( 'monthnum' ),
-			'day'             => get_query_var( 'day' ),
-			'meta_key'        => '',  // phpcs:ignore
-		),
-		$args
+		'type'            => 'monthly',
+		'limit'           => '',
+		'order'           => 'DESC',
+		'post_type'       => 'post',
+		'year'            => get_query_var( 'year' ),
+		'monthnum'        => get_query_var( 'monthnum' ),
+		'day'             => get_query_var( 'day' ),
+		'meta_key'        => '',  // phpcs:ignore
 	);
+	$args = array_merge( $defs, $args );
 
 	$output = '';
 
@@ -135,32 +125,30 @@ function get_date_archives( array $args = array() ): string {
  * @param array $args {
  *     (Optional) Array of type, format, and date query parameters.
  *
- *     @type string     $type            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
- *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
- *     @type string     $order           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
- *     @type string     $post_type       Post type. Default 'post'.
- *     @type string     $year            Year. Default current year.
- *     @type string     $monthnum        Month number. Default current month number.
- *     @type string     $day             Day. Default current day.
- *     @type string     $meta_key        Meta key used instead of post_date.
+ *     @type string     'type'            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
+ *     @type string|int 'limit'           Number of links to limit the query to. Default empty (no limit).
+ *     @type string     'order'           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
+ *     @type string     'post_type'       Post type. Default 'post'.
+ *     @type string     'year'            Year. Default current year.
+ *     @type string     'monthnum'        Month number. Default current month number.
+ *     @type string     'day'             Day. Default current day.
+ *     @type string     'meta_key'        Meta key used instead of post_date.
  * }
  * @return array Link data.
  */
 function get_date_archive_links( array $args = array() ): array {
 	global $wpdb, $wp_locale;
-	$args = array_merge(
-		array(
-			'type'      => 'monthly',
-			'limit'     => '',
-			'order'     => 'DESC',
-			'post_type' => 'post',
-			'year'      => get_query_var( 'year' ),
-			'monthnum'  => get_query_var( 'monthnum' ),
-			'day'       => get_query_var( 'day' ),
-			'meta_key'  => '',  // phpcs:ignore
-		),
-		$args
+	$defs = array(
+		'type'      => 'monthly',
+		'limit'     => '',
+		'order'     => 'DESC',
+		'post_type' => 'post',
+		'year'      => get_query_var( 'year' ),
+		'monthnum'  => get_query_var( 'monthnum' ),
+		'day'       => get_query_var( 'day' ),
+		'meta_key'  => '',  // phpcs:ignore
 	);
+	$args = array_merge( $defs, $args );
 
 	$meta_key = $args['meta_key'];
 	$column   = empty( $meta_key ) ? 'post_date' : 'meta_value';
@@ -281,43 +269,41 @@ function the_taxonomy_archives( array $args = array() ) {
  * @param array $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
- *     @type string     $taxonomy        Taxonomy name to which results should be limited.
- *     @type int        $parent          Parent term ID to retrieve direct-child terms of. Default 0.
- *     @type bool       $hierarchical    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
- *     @type string     $before          Content to prepend to the output. Default is ''.
- *     @type string     $after           Content to append to the output. Default is ''.
- *     @type string     $format          Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     $item_before     Content to prepend to each link. Default value: ''
- *     @type string     $item_after      Content to append to each link. Default value: ''
- *     @type bool       $show_post_count Whether to display the post count alongside the link. Default false.
- *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
- *     @type string     $order           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
- *     @type string     $post_type       Post type. Default 'post'.
- *     @type string     $term            Term slug. Default current term.
+ *     @type string     'taxonomy'        Taxonomy name to which results should be limited.
+ *     @type int        'parent'          Parent term ID to retrieve direct-child terms of. Default 0.
+ *     @type bool       'hierarchical'    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
+ *     @type string     'before'          Content to prepend to the output. Default ''.
+ *     @type string     'after'           Content to append to the output. Default ''.
+ *     @type string     'format'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     'item_before'     Content to prepend to each link. Default value: ''
+ *     @type string     'item_after'      Content to append to each link. Default value: ''
+ *     @type bool       'show_post_count' Whether to display the post count alongside the link. Default false.
+ *     @type string|int 'limit'           Number of links to limit the query to. Default empty (no limit).
+ *     @type string     'order'           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
+ *     @type string     'post_type'       Post type. Default 'post'.
+ *     @type string     'term'            Term slug. Default current term.
  * }
  * @return array String of links.
  */
 function get_taxonomy_archives( $args = array() ): string {
-	$args = array_merge(
-		array(
-			'taxonomy'        => 'category',
-			'parent'          => 0,
-			'hierarchical'    => false,
+	$defs = array(
+		'taxonomy'        => 'category',
+		'parent'          => 0,
+		'hierarchical'    => false,
 
-			'before'          => '',
-			'after'           => '',
-			'format'          => 'html',
-			'item_before'     => '',
-			'item_after'      => '',
-			'show_post_count' => false,
+		'before'          => '',
+		'after'           => '',
+		'format'          => 'html',
+		'item_before'     => '',
+		'item_after'      => '',
+		'show_post_count' => false,
 
-			'limit'           => '',
-			'order'           => 'DESC',
-			'post_type'       => 'post',
-			'term'            => get_query_var( 'term' ),
-		),
-		$args
+		'limit'           => '',
+		'order'           => 'DESC',
+		'post_type'       => 'post',
+		'term'            => get_query_var( 'term' ),
 	);
+	$args = array_merge( $defs, $args );
 
 	$gt_args = $args;
 	foreach ( array( 'format', 'item_before', 'item_after', 'show_post_count', 'limit', 'order', 'post_type', 'term' ) as $key ) {
@@ -367,33 +353,31 @@ function get_taxonomy_archives( $args = array() ): string {
  * @param array $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
- *     @type string     $taxonomy        Taxonomy name to which results should be limited.
- *     @type bool       $hide_empty      Whether to hide terms not assigned to any posts. Default true.
- *     @type int        $parent          Parent term ID to retrieve direct-child terms of. Default 0.
- *     @type bool       $hierarchical    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
- *     @type string     $format          Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     $before          Content to prepend to the description. Default value: ''
- *     @type string     $after           Content to append to the description. Default value: ''
- *     @type bool       $show_post_count Whether to display the post count alongside the link. Default false.
- *     @type string|int $limit           Number of links to limit the query to. Default empty (no limit).
- *     @type string     $order           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
- *     @type string     $post_type       Post type. Default 'post'.
- *     @type string     $term            Term slug. Default current term.
+ *     @type string     'taxonomy'        Taxonomy name to which results should be limited.
+ *     @type bool       'hide_empty'      Whether to hide terms not assigned to any posts. Default true.
+ *     @type int        'parent'          Parent term ID to retrieve direct-child terms of. Default 0.
+ *     @type bool       'hierarchical'    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
+ *     @type string     'format'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     'before'          Content to prepend to the description. Default value: ''
+ *     @type string     'after'           Content to append to the description. Default value: ''
+ *     @type bool       'show_post_count' Whether to display the post count alongside the link. Default false.
+ *     @type string|int 'limit'           Number of links to limit the query to. Default empty (no limit).
+ *     @type string     'order'           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
+ *     @type string     'post_type'       Post type. Default 'post'.
+ *     @type string     'term'            Term slug. Default current term.
  * }
  * @return array Link data.
  */
 function get_taxonomy_archive_links( $args = array() ): array {
 	global $wpdb;
-	$args = array_merge(
-		array(
-			'taxonomy'  => 'category',
-			'limit'     => '',
-			'order'     => 'DESC',
-			'post_type' => 'post',
-			'term'      => get_query_var( 'term' ),
-		),
-		$args
+	$defs = array(
+		'taxonomy'  => 'category',
+		'limit'     => '',
+		'order'     => 'DESC',
+		'post_type' => 'post',
+		'term'      => get_query_var( 'term' ),
 	);
+	$args = array_merge( $defs, $args );
 
 	$post_type_object = get_post_type_object( $args['post_type'] );
 	if ( ! is_post_type_viewable( $post_type_object ) ) {

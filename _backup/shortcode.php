@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-02
+ * @version 2021-04-05
  */
 
 namespace wpinc\navi\shortcode;
@@ -189,33 +189,29 @@ function add_post_type_list_shortcode( $post_type, $taxonomy = false, $args = ar
 	if ( ! is_array( $args ) ) {  // for backward compatibility.
 		$args = array( 'year_date_function' => $args );
 	}
-	$args = array_merge(
-		array(
-			'year_date_function' => '\wpinc\navi\shortcode\get_item_year_date_news',
-			'year_format'        => false,
-		),
-		$args
+	$defs = array(
+		'year_date_function' => '\wpinc\navi\shortcode\get_item_year_date_news',
+		'year_format'        => false,
 	);
+	$args = array_merge( $defs, $args );
 	add_shortcode(
 		$post_type . '-list',
 		function ( $atts, $content ) use ( $post_type, $taxonomy, $args ) {
-			$atts = shortcode_atts(
-				array(
-					'term'                  => '',
-					'taxonomy'              => $taxonomy,
-					'style'                 => '',
-					'heading'               => false,
-					'year-heading'          => false,
-					'latest'                => false,
-					'sticky'                => false,
-					'order'                 => 'desc',
-					'orderby'               => 'date',  // Only 'date' and 'menu_order' is available.
-					'date-after'            => '',
-					'date-before'           => '',
-					'echo-content-on-empty' => false,
-				),
-				$atts
+			$defs = array(
+				'term'                  => '',
+				'taxonomy'              => $taxonomy,
+				'style'                 => '',
+				'heading'               => false,
+				'year-heading'          => false,
+				'latest'                => false,
+				'sticky'                => false,
+				'order'                 => 'desc',
+				'orderby'               => 'date',  // Only 'date' and 'menu_order' is available.
+				'date-after'            => '',
+				'date-before'           => '',
+				'echo-content-on-empty' => false,
 			);
+			$atts = shortcode_atts( $defs, $atts );
 
 			$atts['order'] = strtolower( $atts['order'] );
 			if ( ! empty( $atts['date-after'] ) ) {
