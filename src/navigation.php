@@ -315,18 +315,10 @@ function get_the_page_break_navigation( array $args = array() ): string {
 		'class'              => 'page-break-navigation',
 	);
 
-	$prev = _get_adjacent_page_break_link( $args['prev_text'], true );
-	$next = _get_adjacent_page_break_link( $args['next_text'], false );
-
-	$lis = '';
-	for ( $i = 1; $i <= $numpages; ++$i ) {
-		$url  = \wpinc\navi\page_break\get_page_break_link( $i, $post );
-		$text = $i;
-		$lis .= make_link_markup( $url, $text, 'html', '', '', $i === $page );
-	}
-	$items = "<div class=\"nav-numbers\">\n<ul class\"breaks\">\n$lis</ul>\n</div>";
-	$links = implode( "\n", array( $prev, $items, $next ) );
-	$nav   = make_navigation_markup( $links, 'page-break-navigation', $args['screen_reader_text'], $args['aria_label'] );
+	$prev  = _get_adjacent_page_break_link( $args['prev_text'], true );
+	$next  = _get_adjacent_page_break_link( $args['next_text'], false );
+	$items = _make_page_break_list_markup( 'nav-numbers' );
+	$nav   = make_navigation_markup( "$prev\n$items\n$next", 'page-break-navigation', $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
 
@@ -352,4 +344,23 @@ function _get_adjacent_page_break_link( string $text, bool $is_previous ): strin
 		return sprintf( '<div class="%s"><a href="%s" rel="%s">%s</a></div>', $cls, esc_url( $url ), $rel, esc_html( $text ) );
 	}
 	return sprintf( '<div class="%s disabled"><span>%s</span></div>', $cls, esc_html( $text ) );
+}
+
+/**
+ * Wraps passed link in list item markup.
+ *
+ * @access private
+ *
+ * @param string $class Custom class for the wrapping div element.
+ * @return array Array of list items.
+ */
+function _make_page_break_list_markup( string $class ): array {
+	global $page, $numpages, $post;
+	$lis = '';
+	for ( $i = 1; $i <= $numpages; ++$i ) {
+		$url  = \wpinc\navi\page_break\get_page_break_link( $i, $post );
+		$text = $i;
+		$lis .= make_link_markup( $url, $text, 'html', '', '', $i === $page );
+	}
+	return "<div class=\"$class\">\n<ul class=\"links\">\n$lis</ul>\n</div>";
 }

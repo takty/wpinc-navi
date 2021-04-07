@@ -70,7 +70,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 	}
 	$parent = '<div class="nav-parent current"><span>' . esc_html( get_the_title() ) . '</span></div>';
 	global $post;
-	$items = _make_list_markup( $ps, $post->ID, 'nav-children' );
+	$items = _make_page_list_markup( $ps, $post->ID, 'nav-children' );
 	$nav   = make_navigation_markup( "$parent\n$items", $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
@@ -116,7 +116,7 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 		$text   = get_the_title( $pid );
 		$parent = '<div class="nav-parent"><a class="nav-link" href="' . esc_attr( $url ) . '">' . esc_html( $text ) . '</a></div>';
 	}
-	$items = _make_list_markup( $ps, $post->ID, 'nav-sibling' );
+	$items = _make_page_list_markup( $ps, $post->ID, 'nav-sibling' );
 	$nav   = make_navigation_markup( "$parent\n$items", $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
@@ -195,12 +195,12 @@ function _get_sibling_pages( array $args = array() ): array {
  * @param string $class      Custom class for the wrapping div element.
  * @return array Array of list items.
  */
-function _make_list_markup( array $ps, int $current_id, string $class ): array {
+function _make_page_list_markup( array $ps, int $current_id, string $class ): array {
 	$lis = '';
 	foreach ( $ps as $p ) {
 		$url  = get_permalink( $post->ID );
 		$text = get_the_title( $p->ID );
 		$lis .= make_link_markup( $url, $text, 'html', '', '', $current_id === $p->ID );
 	}
-	return "<div class=\"$class\">\n<ul class=\"pages\">\n$lis</ul>\n</div>";
+	return "<div class=\"$class\">\n<ul class=\"links\">\n$lis</ul>\n</div>";
 }
