@@ -4,35 +4,36 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-05
+ * @version 2021-04-06
  */
 
 namespace wpinc\navi;
 
+require_once __DIR__ . '/markup.php';
 require_once __DIR__ . '/page-break.php';
 
 /**
- * The.
+ * Displays a post navigation, when applicable.
  *
- * @param array $args (Optional) The.
+ * @param array $args (Optional) See get_the_post_navigation() for available arguments.
  */
 function the_post_navigation( array $args = array() ) {
 	echo get_the_post_navigation( $args );  // phpcs:ignore
 }
 
 /**
- * The.
+ * Displays a posts navigation, when applicable.
  *
- * @param array $args (Optional) The.
+ * @param array $args (Optional) See get_the_posts_navigation() for available arguments.
  */
 function the_posts_navigation( array $args = array() ) {
 	echo get_the_posts_navigation( $args );  // phpcs:ignore
 }
 
 /**
- * The.
+ * Displays a page break navigation, when applicable.
  *
- * @param array $args (Optional) The.
+ * @param array $args (Optional) See get_the_page_break_navigation() for available arguments.
  */
 function the_page_break_navigation( array $args = array() ) {
 	echo get_the_page_break_navigation( $args );  // phpcs:ignore
@@ -43,10 +44,15 @@ function the_page_break_navigation( array $args = array() ) {
 
 
 /**
- * The.
+ * Retrieves a post navigation, when applicable.
  *
- * @param array $args (Optional) The.
- * @return string The.
+ * @param array $args {
+ *     (Optional) Default navigation arguments.
+ *
+ *     @type string 'before'                   Content to prepend to the output. Default ''.
+ *     @type string 'after'                    Content to append to the output. Default ''.
+ * }
+ * @return string Markup for post links.
  */
 function get_the_post_navigation( array $args = array() ): string {
 	$args += array(
@@ -54,65 +60,63 @@ function get_the_post_navigation( array $args = array() ): string {
 		'after'              => '',
 		'prev_text'          => '%title',
 		'next_text'          => '%title',
-		'list_text'          => __( 'List' ),
 		'in_same_term'       => false,
 		'excluded_terms'     => '',
 		'taxonomy'           => 'category',
 		'screen_reader_text' => __( 'Post navigation' ),
-		'has_list_link'      => false,
-		'link_list_pos'      => 'center',
+		'aria_label'         => __( 'Post' ),
+
+		'has_archive_link'   => false,
+		'archive_text'       => __( 'List' ),
+		'archive_link_pos'   => 'center',
 	);
 
-	$prev = get_previous_post_link(
-		'<div class="nav-previous">%link</div>',
-		$args['prev_text'],
-		$args['in_same_term'],
-		$args['excluded_terms'],
-		$args['taxonomy']
-	);
+	$temp = '<div class="nav-previous">%link</div>';
+	$prev = get_previous_post_link( $temp, $args['prev_text'], $args['in_same_term'], $args['excluded_terms'], $args['taxonomy'] );
 	if ( ! $prev ) {
-		$str  = ( '%' === $args['prev_text'][0] ) ? '&nbsp;' : $args['prev_text'];
-		$prev = '<div class="nav-previous disabled"><a>' . $str . '</a></div>';
+		$text = ( '%' === $args['prev_text'][0] ) ? '&nbsp;' : esc_html( $args['prev_text'] );
+		$prev = '<div class="nav-previous disabled"><a>' . $text . '</a></div>';
 	}
-	$next = get_next_post_link(
-		'<div class="nav-next">%link</div>',
-		$args['next_text'],
-		$args['in_same_term'],
-		$args['excluded_terms'],
-		$args['taxonomy']
-	);
+	$temp = '<div class="nav-next">%link</div>';
+	$next = get_next_post_link( $temp, $args['next_text'], $args['in_same_term'], $args['excluded_terms'], $args['taxonomy'] );
 	if ( ! $next ) {
-		$str  = ( '%' === $args['next_text'][0] ) ? '&nbsp;' : $args['next_text'];
-		$next = '<div class="nav-next disabled"><a>' . $str . '</a></div>';
+		$text = ( '%' === $args['next_text'][0] ) ? '&nbsp;' : esc_html( $args['next_text'] );
+		$next = '<div class="nav-next disabled"><a>' . $text . '</a></div>';
 	}
-	$list = '';
-	if ( $args['has_list_link'] ) {
+	$arch = '';
+	if ( $args['has_archive_link'] ) {
 		global $post;
-		$list = '<div class="nav-list"><a href="' . esc_url( get_post_type_archive_link( $post->post_type ) ) . '">' . $args['list_text'] . '</a></div>';
+		$text = get_post_type_archive_link( $post->post_type );
+		$arch = '<div class="nav-archive"><a href="' . esc_url( $text ) . '">' . $args['archive_text'] . '</a></div>';
 	}
-	if ( ! $prev && ! $next && ! $list ) {
+	if ( ! $prev && ! $next && ! $arch ) {
 		return '';
 	}
-	$temp = '';
-	switch ( $args['link_list_pos'] ) {
-		case 'start':
-			$temp = $list . $prev . $next;
-			break;
-		case 'center':
-			$temp = $prev . $list . $next;
-			break;
-		case 'end':
-			$temp = $prev . $next . $list;
-			break;
-	}
-	return $args['before'] . _navigation_markup( $temp, 'post-navigation', $args['screen_reader_text'] ) . $args['after'];
+	$temps = array(
+		'start'  => '%3$s%1$s%2$s',
+		'center' => '%1$s%3$s%2$s',
+		'end'    => '%1$s%2$s%3$s',
+	);
+	$align = $temps[ $args['archive_link_pos'] ] ?? $temps['center'];
+	$links = sprintf( $align, $prev, $next, $arch );
+	$nav   = make_navigation_markup( $links, 'post-navigation', $args['screen_reader_text'], $args['aria_label'] );
+	return $args['before'] . $nav . $args['after'];
 }
 
+
+// -----------------------------------------------------------------------------
+
+
 /**
- * The.
+ * Retrieves a posts navigation, when applicable.
  *
- * @param array $args (Optional) The.
- * @return string The.
+ * @param array $args {
+ *     (Optional) Default navigation arguments.
+ *
+ *     @type string 'before'                   Content to prepend to the output. Default ''.
+ *     @type string 'after'                    Content to append to the output. Default ''.
+ * }
+ * @return string Markup for posts links.
  */
 function get_the_posts_navigation( array $args = array() ): string {
 	if ( $GLOBALS['wp_query']->max_num_pages < 2 ) {
@@ -278,7 +282,7 @@ function _paginate_links( array $args = array() ): string {
 
 
 /**
- * Displays the navigation to pages, when applicable.
+ * Displays the navigation to page breaks, when applicable.
  *
  * @param array $args {
  *     (Optional) Default post navigation arguments.
@@ -314,30 +318,16 @@ function get_the_page_break_navigation( array $args = array() ): string {
 	$prev = _get_adjacent_page_break_link( $args['prev_text'], true );
 	$next = _get_adjacent_page_break_link( $args['next_text'], false );
 
-	$lis = array();
+	$lis = '';
 	for ( $i = 1; $i <= $numpages; ++$i ) {
-		if ( $i !== $page ) {
-			$link  = \wpinc\navi\page_break\get_page_break_link( $i, $post );
-			$lis[] = sprintf( '<li><a class="nav-link" href="%s">%d</a></li>', esc_url( $link ), $i );
-		} else {
-			$lis[] = sprintf( '<li class="current"><span>%d</span></li>', $i );
-		}
+		$url  = \wpinc\navi\page_break\get_page_break_link( $i, $post );
+		$text = $i;
+		$lis .= make_link_markup( $url, $text, 'html', '', '', $i === $page );
 	}
-	$link = sprintf( "<div class=\"nav-numbers\">\n<ul class\"breaks\">\n%s</ul>\n</div>", implode( "\n", $lis ) );
-	$temp = array(
-		'<nav class="navigation %s" role="navigation" aria-label="%s">',
-		"\t" . '<h2 class="screen-reader-text">%s</h2>',
-		"\t" . '<div class="nav-links">%s</div>',
-		'</nav>',
-	);
-	$html = sprintf(
-		implode( "\n", $temp ) . "\n",
-		sanitize_html_class( $args['class'] ),
-		esc_html( $args['screen_reader_text'] ),
-		esc_html( $args['aria_label'] ),
-		implode( "\n", array( $prev, $link, $next ) ),
-	);
-	return $args['before'] . $html . $args['after'];
+	$items = "<div class=\"nav-numbers\">\n<ul class\"breaks\">\n$lis</ul>\n</div>";
+	$links = implode( "\n", array( $prev, $items, $next ) );
+	$nav   = make_navigation_markup( $links, 'page-break-navigation', $args['screen_reader_text'], $args['aria_label'] );
+	return $args['before'] . $nav . $args['after'];
 }
 
 /**
@@ -352,22 +342,14 @@ function get_the_page_break_navigation( array $args = array() ): string {
 function _get_adjacent_page_break_link( string $text, bool $is_previous ): string {
 	global $page, $numpages, $post;
 
-	$is_link = $is_previous ? ( 1 !== $page ) : ( $numpages !== $page );
 	$cls     = $is_previous ? 'nav-previous' : 'nav-next';
-	$idx     = $is_previous ? ( $page - 1 ) : ( $page + 1 );
+	$is_link = $is_previous ? ( 1 !== $page ) : ( $numpages !== $page );
 
 	if ( $is_link ) {
-		return sprintf(
-			'<div class="%s"><a href="%s" rel="%s">%s</a></div>',
-			$cls,
-			esc_url( \wpinc\navi\page_break\get_page_break_link( $idx, $post ) ),
-			$is_previous ? 'prev' : 'next',
-			esc_html( $text )
-		);
+		$idx = $is_previous ? ( $page - 1 ) : ( $page + 1 );
+		$url = \wpinc\navi\page_break\get_page_break_link( $idx, $post );
+		$rel = $is_previous ? 'prev' : 'next';
+		return sprintf( '<div class="%s"><a href="%s" rel="%s">%s</a></div>', $cls, esc_url( $url ), $rel, esc_html( $text ) );
 	}
-	return sprintf(
-		'<div class="%s disabled"><span>%s</span></div>',
-		$cls,
-		esc_html( $text )
-	);
+	return sprintf( '<div class="%s disabled"><span>%s</span></div>', $cls, esc_html( $text ) );
 }

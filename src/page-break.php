@@ -10,7 +10,7 @@
 namespace wpinc\navi\page_break;
 
 /**
- * Retrieve page link url. Based on _wp_link_page().
+ * Retrieves page link url. Based on _wp_link_page().
  *
  * @param int      $idx  Page number.
  * @param \WP_Post $post The post.

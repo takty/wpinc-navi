@@ -44,7 +44,7 @@ function _cb_wp_head() {
 }
 
 /**
- * Retrieve page counts.
+ * Retrieves page counts.
  *
  * @access private
  *
@@ -66,7 +66,7 @@ function _get_page_break_count( \WP_Post $post ): int {
 }
 
 /**
- * Retrieve adjacent page break url.
+ * Retrieves adjacent page break url.
  *
  * @access private
  *

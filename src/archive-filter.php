@@ -4,10 +4,12 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-05
+ * @version 2021-04-06
  */
 
 namespace wpinc\navi;
+
+require_once __DIR__ . '/markup.php';
 
 /**
  * Display yearly archive select.
@@ -62,7 +64,7 @@ function the_date_archives( array $args = array() ) {
 }
 
 /**
- * Retrieve date archive links based on type and format.
+ * Retrieves date archive links based on type and format.
  *
  * @param array $args {
  *     (Optional) Array of type, format, and term query parameters.
@@ -113,13 +115,13 @@ function get_date_archives( array $args = array() ): string {
 		$sel   = $link['selected'];
 
 		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
-		$output .= get_archives_link( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
+		$output .= make_link_markup( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
 	}
 	return $args['before'] . $output . $args['after'];
 }
 
 /**
- * Retrieve date archive link data.
+ * Retrieves date archive link data.
  *
  * @param array $args {
  *     (Optional) Array of type, format, and date query parameters.
@@ -262,7 +264,7 @@ function the_taxonomy_archives( array $args = array() ) {
 }
 
 /**
- * Retrieve taxonomy archive links based on type and format.
+ * Retrieves taxonomy archive links based on type and format.
  *
  * @param array $args {
  *     (Optional) Array of type, format, and term query parameters.
@@ -322,7 +324,7 @@ function get_taxonomy_archives( $args = array() ): string {
 		$sel   = $link['selected'];
 
 		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
-		$output .= get_archives_link( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
+		$output .= make_link_markup( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
 
 		if ( $args['hierarchical'] ) {
 			$gt_args['parent'] = $t->term_id;
@@ -337,7 +339,7 @@ function get_taxonomy_archives( $args = array() ): string {
 				$sel   = $links[ $ct->slug ]['selected'];
 
 				$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
-				$output .= get_archives_link( $url, '— ' . $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
+				$output .= make_link_markup( $url, '— ' . $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
 			}
 		}
 	}
@@ -345,7 +347,7 @@ function get_taxonomy_archives( $args = array() ): string {
 }
 
 /**
- * Retrieve taxonomy archive link data.
+ * Retrieves taxonomy archive link data.
  *
  * @param array $args {
  *     (Optional) Array of type, format, and term query parameters.
@@ -425,45 +427,4 @@ function get_taxonomy_archive_links( $args = array() ): array {
 		}
 	}
 	return $links;
-}
-
-
-// -----------------------------------------------------------------------------
-
-
-/**
- * The callback function for 'get_archives_link' filter.
- *
- * @param string $link_html The archive HTML link content.
- * @param string $url       URL to archive.
- * @param string $text      Archive text description.
- * @param string $format    Link format. Can be 'link', 'option', 'html', or custom.
- * @param string $before    Content to prepend to the description.
- * @param string $after     Content to append to the description.
- * @param bool   $selected  True if the current page is the selected archive.
- * @return string The filtered link.
- */
-function _cb_get_archives_link( string $link_html, string $url, string $text, string $format, string $before, string $after, bool $selected ): string {
-	if ( $selected ) {
-		if ( 'html' === $format ) {
-			$link_html = str_replace( "\t<li>", "\t<li class=\"current\">", $link_html );
-		}
-	}
-	static $urls = array();
-	if ( 'option' === $format ) {
-		if ( class_exists( 'Simply_Static\Plugin' ) && empty( $urls ) ) {
-			add_action(
-				'wp_footer',
-				function () use ( &$urls ) {
-					echo '<div style="display:none;"><!-- for simply static -->' . "\n";
-					foreach ( $urls as $url ) {
-						echo "\t" . '<link rel="archive" href="' . esc_attr( $url ) . '">' . "\n";
-					}
-					echo '</div>' . "\n";
-				}
-			);
-		}
-		$urls[] = $url;
-	}
-	return $link_html;
 }
