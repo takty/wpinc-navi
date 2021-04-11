@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-06
+ * @version 2021-04-10
  */
 
 namespace wpinc\navi;
@@ -18,14 +18,14 @@ require_once __DIR__ . '/markup.php';
  */
 function the_yearly_archive_select( array $args = array() ) {
 	$js = 'document.location.href=this.value;';
-	$dt = $args['default_title'] ?? __( 'Year' );
+	$dt = $args['default_label'] ?? __( 'Year' );
 
 	$args += array(
 		'before'    => "<select onchange=\"$js\">\n<option value=\"#\">" . esc_html( $dt ) . "</option>\n",
 		'after'     => '</select>',
 		'post_type' => 'post',
-		'type'      => 'yearly',
-		'format'    => 'option',
+		'date'      => 'yearly',
+		'type'      => 'option',
 		'meta_key'  => '',  // phpcs:ignore
 	);
 	the_date_archives( $args );
@@ -38,14 +38,14 @@ function the_yearly_archive_select( array $args = array() ) {
  */
 function the_taxonomy_archive_select( array $args = array() ) {
 	$js = 'document.location.href=this.value;';
-	$dt = $args['default_title'] ?? __( 'Year' );
+	$dt = $args['default_label'] ?? __( 'Category' );
 
 	$args += array(
 		'before'    => "<select onchange=\"$js\">\n<option value=\"#\">" . esc_html( $dt ) . "</option>\n",
 		'after'     => '</select>',
 		'post_type' => 'post',
 		'taxonomy'  => 'category',
-		'format'    => 'option',
+		'type'      => 'option',
 	);
 	the_taxonomy_archives( $args );
 }
@@ -71,11 +71,11 @@ function the_date_archives( array $args = array() ) {
  *
  *     @type string     'before'          Content to prepend to the output. Default ''.
  *     @type string     'after'           Content to append to the output. Default ''.
- *     @type string     'format'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     'type'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
  *     @type string     'item_before'     Content to prepend to each link. Default value: ''
  *     @type string     'item_after'      Content to append to each link. Default value: ''
  *     @type bool       'show_post_count' Whether to display the post count alongside the link. Default false.
- *     @type string     'type'            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
+ *     @type string     'date'            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
  *     @type string|int 'limit'           Number of links to limit the query to. Default empty (no limit).
  *     @type string     'order'           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
  *     @type string     'post_type'       Post type. Default 'post'.
@@ -91,12 +91,15 @@ function get_date_archives( array $args = array() ): string {
 	$args += array(
 		'before'          => '',
 		'after'           => '',
-		'format'          => 'html',
+
+		'type'            => 'html',
+		'class'           => '',
 		'item_before'     => '',
 		'item_after'      => '',
 		'show_post_count' => false,
+		'default_label'   => '',
 
-		'type'            => 'monthly',
+		'date'            => 'monthly',
 		'limit'           => '',
 		'order'           => 'DESC',
 		'post_type'       => 'post',
@@ -105,19 +108,9 @@ function get_date_archives( array $args = array() ): string {
 		'day'             => get_query_var( 'day' ),
 		'meta_key'        => '',  // phpcs:ignore
 	);
-
-	$output = '';
-
-	foreach ( get_taxonomy_archive_links( $args ) as $link ) {
-		$url   = $link['url'];
-		$text  = $link['text'];
-		$count = $link['count'];
-		$sel   = $link['selected'];
-
-		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
-		$output .= make_link_markup( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
-	}
-	return $args['before'] . $output . $args['after'];
+	$items = get_date_archive_links( $args );
+	$alm   = make_archive_links_markup( $items, $args['type'], $args['class'], $args['item_before'], $args['item_after'], $args['show_post_count'], $args['default_label'] );
+	return $args['before'] . $alm . $args['after'];
 }
 
 /**
@@ -126,7 +119,7 @@ function get_date_archives( array $args = array() ): string {
  * @param array $args {
  *     (Optional) Array of type, format, and date query parameters.
  *
- *     @type string     'type'            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
+ *     @type string     'date'            Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'. Default 'monthly'.
  *     @type string|int 'limit'           Number of links to limit the query to. Default empty (no limit).
  *     @type string     'order'           Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
  *     @type string     'post_type'       Post type. Default 'post'.
@@ -140,7 +133,7 @@ function get_date_archives( array $args = array() ): string {
 function get_date_archive_links( array $args = array() ): array {
 	global $wpdb, $wp_locale;
 	$args += array(
-		'type'      => 'monthly',
+		'date'      => 'monthly',
 		'limit'     => '',
 		'order'     => 'DESC',
 		'post_type' => 'post',
@@ -177,7 +170,7 @@ function get_date_archive_links( array $args = array() ): array {
 	$last_changed = wp_cache_get_last_changed( 'posts' );
 	$limit        = $args['limit'];
 
-	if ( 'yearly' === $args['type'] ) {
+	if ( 'yearly' === $args['date'] ) {
 		$query = "SELECT YEAR($column) AS `year`, count(ID) as `count` FROM $wpdb->posts $join $where GROUP BY YEAR($column) ORDER BY $column $order $limit";
 		$key   = md5( $query );
 		$key   = "get_date_archives:$key:$last_changed";
@@ -193,13 +186,13 @@ function get_date_archive_links( array $args = array() ): array {
 				if ( 'post' !== $args['post_type'] ) {
 					$url = add_query_arg( 'post_type', $args['post_type'], $url );
 				}
-				$text     = sprintf( '%d', $r->year );
-				$count    = $r->count;
-				$selected = is_archive() && (string) $args['year'] === $r->year;
-				$links[]  = compact( 'url', 'text', 'count', 'selected' );
+				$text    = sprintf( '%d', $r->year );
+				$count   = $r->count;
+				$current = is_archive() && (string) $args['year'] === $r->year;
+				$links[] = compact( 'url', 'text', 'count', 'current' );
 			}
 		}
-	} elseif ( 'monthly' === $args['type'] ) {
+	} elseif ( 'monthly' === $args['date'] ) {
 		$query = "SELECT YEAR($column) AS `year`, MONTH($column) AS `month`, count(ID) as `count` FROM $wpdb->posts $join $where GROUP BY YEAR($column), MONTH($column) ORDER BY $column $order $limit";
 		$key   = md5( $query );
 		$key   = "get_date_archives:$key:$last_changed";
@@ -216,13 +209,13 @@ function get_date_archive_links( array $args = array() ): array {
 					$url = add_query_arg( 'post_type', $args['post_type'], $url );
 				}
 				/* translators: 1: month name, 2: 4-digit year */
-				$text     = sprintf( __( '%1$s %2$d' ), $wp_locale->get_month( $r->month ), $r->year );
-				$count    = $r->count;
-				$selected = is_archive() && (string) $args['year'] === $r->year && (string) $args['monthnum'] === $r->month;
-				$links[]  = compact( 'url', 'text', 'count', 'selected' );
+				$text    = sprintf( __( '%1$s %2$d' ), $wp_locale->get_month( $r->month ), $r->year );
+				$count   = $r->count;
+				$current = is_archive() && (string) $args['year'] === $r->year && (string) $args['monthnum'] === $r->month;
+				$links[] = compact( 'url', 'text', 'count', 'current' );
 			}
 		}
-	} elseif ( 'daily' === $args['type'] ) {
+	} elseif ( 'daily' === $args['date'] ) {
 		$query = "SELECT YEAR($column) AS `year`, MONTH($column) AS `month`, DAYOFMONTH($column) AS `dayofmonth`, count(ID) as `count` FROM $wpdb->posts $join $where GROUP BY YEAR($column), MONTH($column), DAYOFMONTH($column) ORDER BY $column $order $limit";
 		$key   = md5( $query );
 		$key   = "get_date_archives:$key:$last_changed";
@@ -240,10 +233,10 @@ function get_date_archive_links( array $args = array() ): array {
 				}
 				$date = sprintf( '%1$d-%2$02d-%3$02d 00:00:00', $r->year, $r->month, $r->dayofmonth );
 
-				$text     = mysql2date( get_option( 'date_format' ), $date );
-				$count    = $r->count;
-				$selected = is_archive() && (string) $args['year'] === $r->year && (string) $args['monthnum'] === $r->month && (string) $args['day'] === $r->dayofmonth;
-				$links[]  = compact( 'url', 'text', 'count', 'selected' );
+				$text    = mysql2date( get_option( 'date_format' ), $date );
+				$count   = $r->count;
+				$current = is_archive() && (string) $args['year'] === $r->year && (string) $args['monthnum'] === $r->month && (string) $args['day'] === $r->dayofmonth;
+				$links[] = compact( 'url', 'text', 'count', 'current' );
 			}
 		}
 	}
@@ -274,7 +267,7 @@ function the_taxonomy_archives( array $args = array() ) {
  *     @type bool       'hierarchical'    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
  *     @type string     'before'          Content to prepend to the output. Default ''.
  *     @type string     'after'           Content to append to the output. Default ''.
- *     @type string     'format'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     'type'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
  *     @type string     'item_before'     Content to prepend to each link. Default value: ''
  *     @type string     'item_after'      Content to append to each link. Default value: ''
  *     @type bool       'show_post_count' Whether to display the post count alongside the link. Default false.
@@ -293,7 +286,7 @@ function get_taxonomy_archives( $args = array() ): string {
 
 		'before'          => '',
 		'after'           => '',
-		'format'          => 'html',
+		'type'            => 'html',
 		'item_before'     => '',
 		'item_after'      => '',
 		'show_post_count' => false,
@@ -305,26 +298,22 @@ function get_taxonomy_archives( $args = array() ): string {
 	);
 
 	$gt_args = $args;
-	foreach ( array( 'format', 'item_before', 'item_after', 'show_post_count', 'limit', 'order', 'post_type', 'term' ) as $key ) {
+	foreach ( array( 'type', 'item_before', 'item_after', 'show_post_count', 'limit', 'order', 'post_type', 'term' ) as $key ) {
 		unset( $gt_args[ $key ] );
 	}
 
-	$links  = get_taxonomy_archive_links( $args );
-	$output = '';
+	$links = get_taxonomy_archive_links( $args );
+	$lms   = '';
 
 	foreach ( get_terms( $gt_args ) as $t ) {
 		if ( ! isset( $links[ $t->slug ] ) ) {
 			continue;
 		}
 		$link = $links[ $t->slug ];
+		list( 'url' => $url, 'text' => $text, 'current' => $cur, 'count' => $count ) = $link;
 
-		$url   = $link['url'];
-		$text  = $link['text'];
-		$count = $link['count'];
-		$sel   = $link['selected'];
-
-		$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
-		$output .= make_link_markup( $url, $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
+		$after = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
+		$lms  .= make_archive_link_markup( $url, $text, $cur, $args['type'], $args['item_before'], $after );
 
 		if ( $args['hierarchical'] ) {
 			$gt_args['parent'] = $t->term_id;
@@ -333,17 +322,15 @@ function get_taxonomy_archives( $args = array() ): string {
 				if ( ! isset( $links[ $ct->slug ] ) ) {
 					continue;
 				}
-				$url   = $links[ $ct->slug ]['url'];
-				$text  = $links[ $ct->slug ]['text'];
-				$count = $links[ $ct->slug ]['count'];
-				$sel   = $links[ $ct->slug ]['selected'];
+				$clink = $links[ $ct->slug ];
+				list( 'url' => $url, 'text' => $text, 'current' => $cur, 'count' => $count ) = $clink;
 
-				$after   = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
-				$output .= make_link_markup( $url, '— ' . $text, $args['format'], $args['item_before'], $args['item_after'], $sel );
+				$after = $args['show_post_count'] ? "&nbsp;($count){$args['item_after']}" : $args['item_after'];
+				$lms  .= make_archive_link_markup( $url, '— ' . $text, $cur, $args['type'], $args['item_before'], $after );
 			}
 		}
 	}
-	return $args['before'] . $output . $args['after'];
+	return $args['before'] . $lms . $args['after'];
 }
 
 /**
@@ -356,7 +343,7 @@ function get_taxonomy_archives( $args = array() ): string {
  *     @type bool       'hide_empty'      Whether to hide terms not assigned to any posts. Default true.
  *     @type int        'parent'          Parent term ID to retrieve direct-child terms of. Default 0.
  *     @type bool       'hierarchical'    Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default false.
- *     @type string     'format'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
+ *     @type string     'type'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
  *     @type string     'before'          Content to prepend to the description. Default value: ''
  *     @type string     'after'           Content to append to the description. Default value: ''
  *     @type bool       'show_post_count' Whether to display the post count alongside the link. Default false.
@@ -420,10 +407,11 @@ function get_taxonomy_archive_links( $args = array() ): array {
 			if ( 'post' !== $args['post_type'] ) {
 				$url = add_query_arg( 'post_type', $args['post_type'], $url );
 			}
-			$text              = sprintf( '%s', $t->name );
-			$count             = $r->count;
-			$selected          = is_tax() && $args['term'] === $t->slug;
-			$links[ $t->slug ] = compact( 'url', 'text', 'count', 'selected' );
+			$text    = sprintf( '%s', $t->name );
+			$current = is_tax() && $args['term'] === $t->slug;
+			$count   = $r->count;
+
+			$links[ $t->slug ] = compact( 'url', 'text', 'current', 'count' );
 		}
 	}
 	return $links;

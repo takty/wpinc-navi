@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-02
+ * @version 2021-04-10
  */
 
 namespace wpinc\navi\link_page_break;
@@ -70,18 +70,18 @@ function _get_page_break_count( \WP_Post $post ): int {
  *
  * @access private
  *
- * @param bool     $previous   Whether to retrieve previous post. Default true.
+ * @param bool     $previous   Whether to retrieve previous post.
  * @param \WP_Post $post       Post.
- * @param int      $page_count Page count.
+ * @param int      $total      Total page count.
  * @return string The URL.
  */
-function _get_adjacent_page_break_url( bool $previous = true, \WP_Post $post, int $page_count ): string {
+function _get_adjacent_page_break_url( bool $previous, \WP_Post $post, int $total ): string {
 	global $wp_query;
 
-	$page = $wp_query->get( 'page', 1 );
-	$idx  = $previous ? $page - 1 : $page + 1;
+	$now = $wp_query->get( 'page', 1 );
+	$idx = $previous ? $now - 1 : $now + 1;
 
-	if ( $idx <= 0 || $page_count < $idx ) {
+	if ( $idx <= 0 || $total < $idx ) {
 		return '';
 	}
 	return get_page_break_link( $idx, $post );
