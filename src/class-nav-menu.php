@@ -1,9 +1,10 @@
 <?php
 /**
- * Nav Menu (PHP)
+ * Nav Menu
  *
+ * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-03-23
+ * @version 2021-04-12
  */
 
 namespace wpinc\navi;
@@ -19,7 +20,10 @@ function get_current_uri( $raw = false ) {
 	return ( is_ssl() ? 'https://' : 'http://' ) . $host . $_SERVER['REQUEST_URI'];
 }
 
-class NavMenu {
+/**
+ * Navigation menu.
+ */
+class Nav_Menu {
 
 	const CLS_HOME          = 'home';
 	const CLS_CURRENT       = 'current';
