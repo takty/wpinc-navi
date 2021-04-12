@@ -52,7 +52,7 @@ function the_posts_navigation( array $args = array() ) {
  *     @type string       'taxonomy'             Taxonomy, if 'in_same_term' is true. Default 'category'.
  *     @type bool         'has_archive_link'     Whether the archive link is contained. Default false.
  *     @type string       'archive_text'         Anchor text to display in the archive link. Default 'List'.
- *     @type string       'archive_link_pos'     Position of archive link, if 'has_archive_link' is true. Can be 'start', 'center', and 'end'. Default 'center'.
+ *     @type string       'archive_link_pos'     Position of archive link, if 'has_archive_link' is true. Can be 'start', 'center', or 'end'. Default 'center'.
  * }
  * @return string Markup for post links.
  */

@@ -68,7 +68,7 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
  * Retrieves archive links content.
  *
  * @param array  $items         Link item.
- * @param string $type          Link format. Can be 'list', 'select', or custom.
+ * @param string $type          Link format. Can be 'list', or 'select'.
  * @param string $class         Custom class for the ul or select element.
  * @param string $before        Content to prepend to each link.
  * @param string $after         Content to append to each link.
