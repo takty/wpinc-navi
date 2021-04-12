@@ -67,16 +67,16 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
 /**
  * Retrieves archive links content.
  *
- * @param array  $items          Link item.
- * @param string $type           Link format. Can be 'list', 'select', or custom.
- * @param string $class          Custom class for the ul or select element.
- * @param string $before         Content to prepend to each link.
- * @param string $after          Content to append to each link.
- * @param bool   $is_count_shown Whether the count is shown.
- * @param string $label          Default label for the select element.
+ * @param array  $items         Link item.
+ * @param string $type          Link format. Can be 'list', 'select', or custom.
+ * @param string $class         Custom class for the ul or select element.
+ * @param string $before        Content to prepend to each link.
+ * @param string $after         Content to append to each link.
+ * @param bool   $do_show_count Whether the count is shown.
+ * @param string $label         Default label for the select element.
  * @return string HTML content.
  */
-function make_archive_links_markup( array $items, string $type = 'list', string $class = '', string $before = '', string $after = '', bool $is_count_shown = false, string $label = '' ): string {
+function make_archive_links_markup( array $items, string $type = 'list', string $class = '', string $before = '', string $after = '', bool $do_show_count = false, string $label = '' ): string {
 	$class = empty( $class ) ? '' : ( ' ' . sanitize_html_class( $class ) );
 
 	$lms = '';
@@ -86,7 +86,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 			if ( $dots ) {
 				$lms .= sprintf( '	<li class="dots"><span>%s</span></li>', $text ) . "\n";
 			} else {
-				$after_mod = ( $is_count_shown && isset( $count ) ) ? "&nbsp;($count)$after" : $after;
+				$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
 
 				$lms .= make_archive_link_markup( $url, $text, $cur, 'html', $before, $after_mod );
 			}
@@ -97,7 +97,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 	} elseif ( 'select' === $type ) {
 		foreach ( $items as $item ) {
 			list( 'url' => $url, 'text' => $text, 'current' => $cur, 'count' => $count ) = $item;
-			$after_mod = ( $is_count_shown && isset( $count ) ) ? "&nbsp;($count)$after" : $after;
+			$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
 
 			$lms .= make_archive_link_markup( $url, $text, $cur, 'option', $before, $after );
 		}
@@ -146,18 +146,7 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 			$html = sprintf( '	%4$s<a class="nav-link" href="%1$s"%3$s>%2$s</a>%5$s', $url, $text, $aria, $before, $after ) . "\n";
 		}
 	}
-	/**
-	 * Filters the archive link content.
-	 *
-	 * @param string $html    The archive HTML link content.
-	 * @param string $url     URL to archive.
-	 * @param string $text    Archive text description.
-	 * @param bool   $current True if the current page is the selected archive.
-	 * @param string $type    Link format. Can be 'link', 'option', 'html', or custom.
-	 * @param string $before  Content to prepend to the description.
-	 * @param string $after   Content to append to the description.
-	 */
-	return apply_filters( 'make_archive_link_markup', $html, $url, $text, $current, $type, $before, $after );
+	return $html;
 }
 
 /**
