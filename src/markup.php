@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-10
+ * @version 2021-04-12
  */
 
 namespace wpinc\navi;
@@ -40,6 +40,28 @@ function make_navigation_markup( string $links, string $class, string $screen_re
 		esc_html( $screen_reader_text ),
 		$links
 	);
+}
+
+/**
+ * Retrieves adjacent link content.
+ *
+ * @param callable $get_link The function that retrieves archive page URLs.
+ * @param bool     $previous Whether to retrieve previous post.
+ * @param string   $text     Link text description.
+ * @param int      $total    Total pages.
+ * @param int      $current  Current page.
+ * @return string HTML content.
+ */
+function make_adjacent_link_markup( $get_link, bool $previous, string $text, int $total, int $current ): string {
+	$cls     = $previous ? 'nav-previous' : 'nav-next';
+	$is_link = $previous ? ( 1 < $current ) : ( $current < $total );
+
+	if ( $is_link ) {
+		$url = call_user_func( $get_link, $current + ( $previous ? -1 : 1 ) );
+		$rel = $previous ? 'prev' : 'next';
+		return sprintf( '<div class="%s"><a class="nav-link" href="%s" rel="%s">%s</a></div>', $cls, esc_url( $url ), $rel, esc_html( $text ) );
+	}
+	return sprintf( '<div class="%s disabled"><span>%s</span></div>', $cls, esc_html( $text ) );
 }
 
 /**
@@ -160,4 +182,49 @@ function _assign_link_tags( string $url ) {
 		);
 	}
 	$urls[] = $url;
+}
+
+
+// -----------------------------------------------------------------------------
+
+
+/**
+ * Retrieves archive link items.
+ *
+ * @param callable $get_link The function that retrieves archive page URLs.
+ * @param int      $total    Total pages.
+ * @param int      $current  Current page.
+ * @param int      $mid_size How many numbers to either side of the current pages.
+ * @param int      $end_size How many numbers on either the start and the end list edges.
+ * @return array Link items.
+ */
+function get_archive_link_items( $get_link, int $total, int $current, int $mid_size, int $end_size ): array {
+	$end_size = ( $end_size < 1 ) ? 1 : $end_size;
+	$mid_size = ( $mid_size < 0 ) ? 2 : $mid_size;
+
+	$dots = false;
+	$lis  = array();
+
+	for ( $n = 1; $n <= $total; ++$n ) {
+		if (
+			$n === $current ||
+			$n <= $end_size ||
+			( $current && $n >= $current - $mid_size && $n <= $current + $mid_size ) ||
+			$n > $total - $end_size
+		) {
+			$dots  = true;
+			$lis[] = array(
+				'url'     => call_user_func( $get_link, $n ),
+				'text'    => number_format_i18n( $n ),
+				'current' => $n === $current,
+			);
+		} elseif ( $dots ) {
+			$dots  = false;
+			$lis[] = array(
+				'text' => __( '&hellip;' ),
+				'dots' => true,
+			);
+		}
+	}
+	return $lis;
 }

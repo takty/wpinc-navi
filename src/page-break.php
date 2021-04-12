@@ -4,21 +4,26 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-02
+ * @version 2021-04-12
  */
 
 namespace wpinc\navi\page_break;
 
 /**
- * Retrieves page link url. Based on _wp_link_page().
+ * Retrieves page break link url. Based on _wp_link_page().
  *
- * @param int      $idx  Page number.
- * @param \WP_Post $post The post.
+ * @param int       $idx  Page number.
+ * @param ?\WP_Post $post The post.
  * @return string Link.
  */
-function get_page_break_link( int $idx, \WP_Post $post ): string {
+function get_page_break_link( int $idx, ?\WP_Post $post = null ): string {
 	global $wp_rewrite;
-
+	if ( empty( $post ) && isset( $GLOBALS['post'] ) ) {
+		$post = $GLOBALS['post'];
+	}
+	if ( ! $_post ) {
+		return '';
+	}
 	$url = get_permalink( $post );
 	if ( 1 < $idx ) {
 		if ( empty( get_option( 'permalink_structure' ) ) || ( $post && in_array( $post->post_status, array( 'draft', 'pending' ), true ) ) ) {

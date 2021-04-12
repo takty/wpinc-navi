@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-10
+ * @version 2021-04-12
  */
 
 namespace wpinc\navi;
@@ -197,16 +197,20 @@ function _get_page_link_items( array $query_args, int $parent_id, bool $hide_pag
  * Displays the navigation to page breaks, when applicable.
  *
  * @param array $args {
- *     (Optional) Default post navigation arguments.
+ *     (Optional) Default page break navigation arguments.
  *
  *     @type string 'before'             Content to prepend to the output. Default ''.
  *     @type string 'after'              Content to append to the output. Default ''.
  *     @type string 'prev_text'          Anchor text to display in the previous post link. Default ''.
  *     @type string 'next_text'          Anchor text to display in the next post link. Default ''.
- *     @type string 'screen_reader_text' Screen reader text for the nav element. Default 'Post navigation'.
+ *     @type string 'screen_reader_text' Screen reader text for the nav element. Default 'Post break navigation'.
  *     @type string 'aria_label'         ARIA label text for the nav element. Default 'Page breaks'.
  *     @type string 'class'              Custom class for the nav element. Default 'page-break-navigation'.
  *     @type string 'type'               Link format. Can be 'list', 'select', or custom.
+ *     @type string 'mid_size'           How many numbers to either side of the current pages. Default 2.
+ *     @type string 'end_size'           How many numbers on either the start and the end list edges. Default 1.
+ *     @type string 'number_before'      A string to appear before the page number.
+ *     @type string 'number_after'       A string to append after the page number.
  * }
  * @return string Markup for page break links.
  */
@@ -227,61 +231,23 @@ function get_the_page_break_navigation( array $args = array() ): string {
 		'aria_label'         => __( 'Page breaks' ),
 		'class'              => 'page-break-navigation',
 		'type'               => 'list',
+
+		'mid_size'           => 2,
+		'end_size'           => 1,
+		'number_before'      => '',
+		'number_after'       => '',
 	);
 
-	$lis = _get_page_break_link_items();
+	$lis = get_archive_link_items( '\wpinc\navi\page_break\get_page_break_link', $numpages, $page, (int) $args['mid_size'], (int) $args['end_size'] );
 
 	$ls   = array();
-	$ls[] = _get_adjacent_page_break_link( true, $args['prev_text'] );
+	$ls[] = make_adjacent_link_markup( '\wpinc\navi\page_break\get_page_break_link', true, $args['prev_text'], $numpages, $page );
 	$ls[] = '<div class="nav-items">';
-	$ls[] = make_archive_links_markup( $lis, $args['type'] );
+	$ls[] = make_archive_links_markup( $lis, $args['type'], '', $args['number_before'], $args['number_after'] );
 	$ls[] = '</div>';
-	$ls[] = _get_adjacent_page_break_link( false, $args['next_text'] );
+	$ls[] = make_adjacent_link_markup( '\wpinc\navi\page_break\get_page_break_link', false, $args['next_text'], $numpages, $page );
 
 	$ls  = improve( "\n", $ls ) . "\n";
-	$nav = make_navigation_markup( $ls, 'page-break-navigation', $args['screen_reader_text'], $args['aria_label'] );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
-}
-
-/**
- * Retrieves the adjacent page break link.
- *
- * @access private
- *
- * @param bool   $previous Whether to display link to previous or next post.
- * @param string $text     Text for anchor link.
- * @return string The page break link wrapped in a div element.
- */
-function _get_adjacent_page_break_link( bool $previous, string $text ): string {
-	global $page, $numpages, $post;
-
-	$cls     = $previous ? 'nav-previous' : 'nav-next';
-	$is_link = $previous ? ( 1 !== $page ) : ( $numpages !== $page );
-
-	if ( $is_link ) {
-		$url = \wpinc\navi\page_break\get_page_break_link( $page + ( $previous ? -1 : 1 ), $post );
-		$rel = $previous ? 'prev' : 'next';
-		return sprintf( '<div class="%s"><a class="nav-link" href="%s" rel="%s">%s</a></div>', $cls, esc_url( $url ), $rel, esc_html( $text ) );
-	}
-	return sprintf( '<div class="%s disabled"><span>%s</span></div>', $cls, esc_html( $text ) );
-}
-
-/**
- * Retrieves archive link items of page breaks.
- *
- * @access private
- *
- * @return array Array of link items.
- */
-function _get_page_break_link_items(): array {
-	global $page, $numpages, $post;
-	$lis = array();
-	for ( $n = 1; $n <= $numpages; ++$n ) {
-		$lis[] = array(
-			'url'     => \wpinc\navi\page_break\get_page_break_link( $n, $post ),
-			'text'    => number_format_i18n( $n ),
-			'current' => ( $n === $page ),
-		);
-	}
-	return $lis;
 }

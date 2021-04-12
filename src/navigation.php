@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-09
+ * @version 2021-04-12
  */
 
 namespace wpinc\navi;
@@ -38,10 +38,21 @@ function the_posts_navigation( array $args = array() ) {
  * Retrieves a post navigation, when applicable.
  *
  * @param array $args {
- *     (Optional) Default navigation arguments.
+ *     (Optional) Default post navigation arguments.
  *
- *     @type string 'before'                   Content to prepend to the output. Default ''.
- *     @type string 'after'                    Content to append to the output. Default ''.
+ *     @type string       'before'               Content to prepend to the output. Default ''.
+ *     @type string       'after'                Content to append to the output. Default ''.
+ *     @type string       'prev_text'            Anchor text to display in the previous post link. Default ''.
+ *     @type string       'next_text'            Anchor text to display in the next post link. Default ''.
+ *     @type string       'screen_reader_text'   Screen reader text for the nav element. Default 'Post navigation'.
+ *     @type string       'aria_label'           ARIA label text for the nav element. Default 'Post'.
+ *     @type string       'class'                Custom class for the nav element. Default 'post-navigation'.
+ *     @type bool         'in_same_term'         Whether link should be in a same taxonomy term. Default false.
+ *     @type int[]|string 'excluded_terms'       Array or comma-separated list of excluded term IDs.
+ *     @type string       'taxonomy'             Taxonomy, if 'in_same_term' is true. Default 'category'.
+ *     @type bool         'has_archive_link'     Whether the archive link is contained. Default false.
+ *     @type string       'archive_text'         Anchor text to display in the archive link. Default 'List'.
+ *     @type string       'archive_link_pos'     Position of archive link, if 'has_archive_link' is true. Can be 'start', 'center', and 'end'. Default 'center'.
  * }
  * @return string Markup for post links.
  */
@@ -51,11 +62,13 @@ function get_the_post_navigation( array $args = array() ): string {
 		'after'              => '',
 		'prev_text'          => '',
 		'next_text'          => '',
+		'screen_reader_text' => __( 'Post navigation' ),
+		'aria_label'         => __( 'Post' ),
+		'class'              => 'post-navigation',
+
 		'in_same_term'       => false,
 		'excluded_terms'     => '',
 		'taxonomy'           => 'category',
-		'screen_reader_text' => __( 'Post navigation' ),
-		'aria_label'         => __( 'Post' ),
 
 		'has_archive_link'   => false,
 		'archive_text'       => __( 'List' ),
@@ -76,8 +89,9 @@ function get_the_post_navigation( array $args = array() ): string {
 		'end'    => '%1$s%2$s%3$s',
 	);
 	$align = $temps[ $args['archive_link_pos'] ] ?? $temps['center'];
-	$links = sprintf( $align, $prev, $next, $arch );
-	$nav   = make_navigation_markup( $links, 'post-navigation', $args['screen_reader_text'], $args['aria_label'] );
+
+	$ls  = sprintf( $align, $prev, $next, $arch );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
 
@@ -113,60 +127,63 @@ function _get_adjacent_post_link( string $text, bool $previous, $in_same_term, $
  * Retrieves a posts navigation, when applicable.
  *
  * @param array $args {
- *     (Optional) Default navigation arguments.
+ *     (Optional) Default posts navigation arguments.
  *
- *     @type string 'before'                   Content to prepend to the output. Default ''.
- *     @type string 'after'                    Content to append to the output. Default ''.
+ *     @type string 'before'             Content to prepend to the output. Default 'Previous'.
+ *     @type string 'after'              Content to append to the output. Default 'Next'.
+ *     @type string 'prev_text'          Anchor text to display in the previous post link. Default ''.
+ *     @type string 'next_text'          Anchor text to display in the next post link. Default ''.
+ *     @type string 'screen_reader_text' Screen reader text for the nav element. Default 'Posts navigation'.
+ *     @type string 'aria_label'         ARIA label text for the nav element. Default 'Pages'.
+ *     @type string 'class'              Custom class for the nav element. Default 'page-break-navigation'.
+ *     @type string 'type'               Link format. Can be 'list', 'select', or custom.
+ *     @type string 'mid_size'           How many numbers to either side of the current pages. Default 2.
+ *     @type string 'end_size'           How many numbers on either the start and the end list edges. Default 1.
+ *     @type string 'number_before'      A string to appear before the page number.
+ *     @type string 'number_after'       A string to append after the page number.
+ *     @type string 'add_args'           An array of query args to add.
+ *     @type string 'add_fragment'       A string to append to each link.
  * }
  * @return string Markup for posts links.
  */
 function get_the_posts_navigation( array $args = array() ): string {
-	if ( $GLOBALS['wp_query']->max_num_pages < 2 ) {
+	global $wp_query, $wp_rewrite;
+	if ( ! isset( $wp_query->max_num_pages ) || $wp_query->max_num_pages < 2 ) {
 		return '';
+	}
+	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
+		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
 		'before'             => '',
 		'after'              => '',
-		'mid_size'           => 1,
 		'prev_text'          => _x( 'Previous', 'previous set of posts' ),
 		'next_text'          => _x( 'Next', 'next set of posts' ),
 		'screen_reader_text' => __( 'Posts navigation' ),
 		'aria_label'         => __( 'Posts' ),
 		'class'              => 'posts-navigation',
 		'type'               => 'list',
+
+		'mid_size'           => 2,
+		'end_size'           => 1,
+		'number_before'      => '',
+		'number_after'       => '',
+		'add_args'           => array(), // Array of query args to add.
+		'add_fragment'       => '',
 	);
-	global $wp_query, $wp_rewrite;
-
-	$pagenum_link = html_entity_decode( get_pagenum_link() );
-	$url_parts    = explode( '?', $pagenum_link );
-	$total        = isset( $wp_query->max_num_pages ) ? $wp_query->max_num_pages : 1;
-	$current      = get_query_var( 'paged' ) ? ( (int) get_query_var( 'paged' ) ) : 1;
-	$pagenum_link = trailingslashit( $url_parts[0] ) . '%_%';
-	$format       = $wp_rewrite->using_index_permalinks() && ! strpos( $pagenum_link, 'index.php' ) ? 'index.php/' : '';
-	$format      .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
-
-	$defaults = array(
-		'base'          => $pagenum_link,
-		'format'        => $format,
-		'total'         => $total,
-		'current'       => $current,
-		'aria_current'  => 'page',
-		'show_all'      => false,
-		'prev_next'     => true,
-		'end_size'      => 1,
-		'mid_size'      => 2,
-		'add_args'      => array(), // array of query args to add.
-		'add_fragment'  => '',
-		'number_before' => '',
-		'number_after'  => '',
-	);
-
-	$args = wp_parse_args( $args, $defaults );
 	if ( ! is_array( $args['add_args'] ) ) {
 		$args['add_args'] = array();
 	}
+	$base      = html_entity_decode( get_pagenum_link() );
+	$url_parts = explode( '?', $base );
+	$total     = $wp_query->max_num_pages;
+	$current   = get_query_var( 'paged' ) ? ( (int) get_query_var( 'paged' ) ) : 1;
+	$base      = trailingslashit( $url_parts[0] ) . '%_%';
+	$format    = $wp_rewrite->using_index_permalinks() && ! strpos( $base, 'index.php' ) ? 'index.php/' : '';
+	$format   .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
+
 	if ( isset( $url_parts[1] ) ) {
-		$format       = explode( '?', str_replace( '%_%', $args['format'], $args['base'] ) );
+		$format       = explode( '?', str_replace( '%_%', $format, $base ) );
 		$format_query = isset( $format[1] ) ? $format[1] : '';
 		wp_parse_str( $format_query, $format_args );
 		wp_parse_str( $url_parts[1], $url_query_args );
@@ -175,38 +192,32 @@ function get_the_posts_navigation( array $args = array() ): string {
 		}
 		$args['add_args'] = array_merge( $args['add_args'], urlencode_deep( $url_query_args ) );
 	}
+	$get_link = _get_paging_link_function( $format, $base, $args['add_args'], $args['add_fragment'] );
 
-	$total = (int) $args['total'];
-	if ( $total < 2 ) {
-		return '';
-	}
-	$current  = (int) $args['current'];
-	$end_size = (int) $args['end_size'];
-	$mid_size = (int) $args['mid_size'];
+	$lis = get_archive_link_items( $get_link, $total, $current, (int) $args['mid_size'], (int) $args['end_size'] );
 
-	$page_link = _get_paging_link_function( $args['format'], $args['base'], $args['add_args'], $args['add_fragment'] );
-
-	$lis = _get_paging_link_items( $total, $current, $mid_size, $end_size, $page_link );
-	$ls  = array();
-
-	if ( $args['prev_next'] ) {
-		$ls[] = _get_adjacent_paging( true, $args['prev_text'], $total, $current, $page_link );
-	}
+	$ls   = array();
+	$ls[] = make_adjacent_link_markup( $get_link, true, $args['prev_text'], $total, $current );
 	$ls[] = '<div class="nav-items">';
 	$ls[] = make_archive_links_markup( $lis, $args['type'], '', $args['number_before'], $args['number_after'] );
 	$ls[] = '</div>';
-	if ( $args['prev_next'] ) {
-		$ls[] = _get_adjacent_paging( false, $args['next_text'], $total, $current, $page_link );
-	}
+	$ls[] = make_adjacent_link_markup( $get_link, false, $args['next_text'], $total, $current );
+
 	$ls  = improve( "\n", $ls ) . "\n";
-	$nav = make_navigation_markup( $ls, 'page-break-navigation', $args['screen_reader_text'], $args['aria_label'] );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
 
 /**
- * The.
+ * Get the function that retrieves paging links.
  *
  * @access private
+ *
+ * @param string $format       Format for the pagination structure.
+ * @param string $base         Base of the paginated url.
+ * @param array  $add_args     An array of query args to add.
+ * @param string $add_fragment A string to append to each link.
+ * @return callable Function that retrieves paging links.
  */
 function _get_paging_link_function( string $format, string $base, array $add_args, string $add_fragment ): callable {
 	return function ( int $idx ) use ( $format, $base, $add_args, $add_fragment ) {
@@ -218,54 +229,4 @@ function _get_paging_link_function( string $format, string $base, array $add_arg
 		$url .= $add_fragment;
 		return apply_filters( 'paginate_links', $url );
 	};
-}
-
-/**
- *
- * @access private
- */
-function _get_adjacent_paging( bool $previous, string $text, int $total, int $current, callable $page_link ): string {
-	$cls     = $previous ? 'nav-previous' : 'nav-next';
-	$is_link = $previous ? ( 1 < $current ) : ( $current < $total );
-
-	if ( $is_link ) {
-		$url = $page_link( $current + ( $previous ? -1 : 1 ) );
-		return '<div class="' . $cls . '"><a href="' . $url . '">' . $text . '</a></div>';
-	}
-	return '<div class="' . $cls . ' disabled"><span>' . $text . '</span></div>';
-}
-
-/**
- *
- * @access private
- */
-function _get_paging_link_items( int $total, int $current, int $mid_size, int $end_size, callable $page_link ): array {
-	$end_size = ( $end_size < 1 ) ? 1 : $end_size;
-	$mid_size = ( $mid_size < 0 ) ? 2 : $mid_size;
-
-	$dots = false;
-	$lis  = array();
-
-	for ( $n = 1; $n <= $total; ++$n ) {
-		if (
-			$n === $current ||
-			$n <= $end_size ||
-			( $current && $n >= $current - $mid_size && $n <= $current + $mid_size ) ||
-			$n > $total - $end_size
-		) {
-			$dots  = true;
-			$lis[] = array(
-				'url'     => $page_link( $n ),
-				'text'    => number_format_i18n( $n ),
-				'current' => $n === $current,
-			);
-		} elseif ( $dots ) {
-			$dots  = false;
-			$lis[] = array(
-				'text' => __( '&hellip;' ),
-				'dots' => true,
-			);
-		}
-	}
-	return $lis;
 }
