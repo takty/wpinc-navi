@@ -1,6 +1,6 @@
 <?php
 /**
- * Navigation Tags
+ * Post and Posts Navigation
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
