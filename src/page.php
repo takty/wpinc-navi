@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-12
+ * @version 2021-04-13
  */
 
 namespace wpinc\navi;
@@ -128,7 +128,7 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 }
 
 /**
- * Retrieves the parent page link.
+ * Makes the parent page link markup.
  *
  * @access private
  *

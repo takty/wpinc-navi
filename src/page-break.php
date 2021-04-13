@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-12
+ * @version 2021-04-13
  */
 
 namespace wpinc\navi\page_break;

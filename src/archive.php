@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-12
+ * @version 2021-04-13
  */
 
 namespace wpinc\navi;
@@ -12,7 +12,7 @@ namespace wpinc\navi;
 require_once __DIR__ . '/markup.php';
 
 /**
- * Display yearly archive select.
+ * Displays yearly archive select.
  *
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
@@ -32,7 +32,7 @@ function the_yearly_archive_select( array $args = array() ) {
 }
 
 /**
- * Display taxonomy archive select.
+ * Displays taxonomy archive select.
  *
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
@@ -55,7 +55,7 @@ function the_taxonomy_archive_select( array $args = array() ) {
 
 
 /**
- * Display date archive links based on type and format.
+ * Displays date archive links based on type and format.
  *
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
@@ -215,7 +215,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 
 
 /**
- * Display taxonomy archive links based on type and format.
+ * Displays taxonomy archive links based on type and format.
  *
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-12
+ * @version 2021-04-13
  */
 
 namespace wpinc\navi;
@@ -209,7 +209,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 }
 
 /**
- * Get the function that retrieves paging links.
+ * Gets the function that retrieves paging links.
  *
  * @access private
  *

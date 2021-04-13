@@ -4,13 +4,13 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-12
+ * @version 2021-04-13
  */
 
 namespace wpinc\navi;
 
 /**
- * Wraps passed links in navigational markup.
+ * Makes navigational markup using passed links.
  *
  * @param string $links              Navigational links.
  * @param string $class              Custom class for the nav element.
@@ -43,7 +43,7 @@ function make_navigation_markup( string $links, string $class, string $screen_re
 }
 
 /**
- * Retrieves adjacent link content.
+ * Makes adjacent link content.
  *
  * @param callable $get_link The function that retrieves archive page URLs.
  * @param bool     $previous Whether to retrieve previous post.
@@ -65,7 +65,7 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
 }
 
 /**
- * Retrieves archive links content.
+ * Makes archive links content.
  *
  * @param array  $items         Link item.
  * @param string $type          Link format. Can be 'list', or 'select'.
@@ -115,7 +115,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 }
 
 /**
- * Retrieves archive link content based on predefined or custom code.
+ * Makes archive link content based on predefined or custom code.
  * Based on get_archives_link().
  *
  * @param string $url     URL to archive.
@@ -150,7 +150,7 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 }
 
 /**
- * Assign link tags.
+ * Assigns link tags.
  *
  * @access private
  *
