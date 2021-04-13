@@ -4,20 +4,23 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-12
+ * @version 2021-04-13
  */
 
 namespace wpinc\navi;
 
-function get_current_uri( $raw = false ) {
-	$host = $_SERVER['HTTP_HOST'];
-	if ( isset( $_SERVER['HTTP_X_FORWARDED_HOST'] ) ) {  // When reverse proxy exists.
-		$host = $_SERVER['HTTP_X_FORWARDED_HOST'];
-	}
-	if ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) {
-		return ( is_ssl() ? 'https://' : 'http://' ) . $host . $_SERVER['REQUEST_URI_ORIG'];
-	}
-	return ( is_ssl() ? 'https://' : 'http://' ) . $host . $_SERVER['REQUEST_URI'];
+/**
+ * Retrieves current URI.
+ *
+ * @param bool $raw Whether the returned value is raw.
+ * @return string The current URI.
+ */
+function get_current_uri( bool $raw = false ): string {
+	// phpcs:disable
+	$host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'];  // When reverse proxy exists.
+	$req  = ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) ? $_SERVER['REQUEST_URI_ORIG'] : $_SERVER['REQUEST_URI'];
+	return ( is_ssl() ? 'https://' : 'http://' ) . $host . $req;
+	// phpcs:enable
 }
 
 /**
@@ -35,358 +38,160 @@ class Nav_Menu {
 	const CLS_SEPARATOR     = 'separator';
 	const CLS_GROUP         = 'group';
 
-	const CACHE_EXPIRATION  = DAY_IN_SECONDS;
+	const CACHE_EXPIRATION = DAY_IN_SECONDS;
 
-	static protected $_is_cache_enabled = false;
-	static protected $_is_current_archive_enabled = true;
-	static protected $_custom_post_type_archive = array();
+	/**
+	 * Whether the menu is cached.
+	 *
+	 * @var 1.0
+	 */
+	protected static $is_cache_enabled = false;
 
-	static private function _get_ancestor_terms( $t ) {
-		$ret = array();
-		while ( 0 !== $t->parent ) {
-			$ret[] = get_term( $t->parent, $t->taxonomy );
-		}
-		return $ret;
+	/**
+	 * An array of custom post types to archive slug.
+	 *
+	 * @var 1.0
+	 */
+	protected static $custom_post_type_archive = array();
+
+	/**
+	 * Sets the cache of the menu enabled.
+	 *
+	 * @param bool $flag True if enabled.
+	 */
+	public static function set_cache_enabled( bool $flag ) {
+		self::$is_cache_enabled = $flag;
+		add_action( 'wp_update_nav_menu', array( '\wpinc\navi\Nav_Menu', 'cb_wp_update_nav_menu_' ), 10, 2 );
 	}
 
-	public static function set_cache_enabled( $flag ) {
-		self::$_is_cache_enabled = $flag;
-		add_action( 'wp_update_nav_menu', array( '\wpinc\navi\NavMenu', '_cb_wp_update_nav_menu' ), 10, 2 );
+	/**
+	 * Adds the archive slug of a custom post type.
+	 *
+	 * @param string $post_type Post type.
+	 * @param string $slug      Slug of the archive page.
+	 */
+	public static function add_custom_post_type_archive( string $post_type, string $slug ) {
+		self::$custom_post_type_archive[ $post_type ] = $slug;
 	}
 
-	public static function set_current_archive_enabled( $flag ) {
-		self::$_is_current_archive_enabled = $flag;
-	}
+	/**
+	 * Anchored page IDs.
+	 *
+	 * @var 1.0
+	 */
+	protected $anchored_page_ids;
 
-	public static function add_custom_post_type_archive( $post_type, $slug ) {
-		self::$_custom_post_type_archive[ $post_type ] = $slug;
-	}
+	/**
+	 * Object types can be current.
+	 *
+	 * @var 1.0
+	 */
+	protected $object_types_can_be_current;
 
-	protected $_cur_url;
-	protected $_cur_post_type         = false;
-	protected $_cur_tax               = false;
-	protected $_cur_term_id           = false;
-	protected $_cur_term_archive_urls = array();
-	protected $_cur_is_archive        = false;
+	/**
+	 * Home URL.
+	 *
+	 * @var 1.0
+	 */
+	protected $home_url;
 
-	protected $_home_url;
-	protected $_is_page;
-	protected $_expanded_page_ids = false;
-	protected $_cur_objs = false;
-	protected $_menu_id = false;
+	/**
+	 * Filter function for titles.
+	 *
+	 * @var 1.0
+	 */
+	protected $title_filter;
 
-	protected $_pid_to_menu;
-	protected $_pid_to_children_state;
-	protected $_id_to_attr;
+	/**
+	 * Filter function for contents.
+	 *
+	 * @var 1.0
+	 */
+	protected $content_filter;
 
-	public function __construct( $menu_name, $expanded_page_ids = false, $object_type_s = false, callable $home_url = null ) {
-		$this->_cur_url = trailingslashit( strtok( get_current_uri( true ), '?' ) );
-		if ( self::$_is_current_archive_enabled && ( is_single() || is_archive() ) ) {
-			$this->_cur_post_type = get_post_type();
-			if ( is_tax() ) {
-				$queried_object     = get_queried_object();
-				$this->_cur_tax     = $queried_object->taxonomy;
-				$this->_cur_term_id = $queried_object->term_id;
-			}
-			if ( is_single() ) {
-				$tax_names = get_object_taxonomies( $this->_cur_post_type );
-				$pid       = get_the_ID();
-				$terms     = array();
-				foreach ( $tax_names as $tax_name ) {
-					$ts = wp_get_post_terms( $pid, $tax_name );
-					foreach ( $ts as $t ) {
-						$terms[ $t->taxonomy . ' ' . $t->slug ] = $t;
+	/**
+	 * Current URL.
+	 *
+	 * @var 1.0
+	 */
+	protected $cur_url;
 
-						$ats = self::_get_ancestor_terms( $t );
-						foreach ( $ats as $at ) {
-							$terms[ $at->taxonomy . ' ' . $at->slug ] = $at;
-						}
-					}
-				}
-				$this->_cur_term_archive_urls = array_map( 'get_term_link', $terms );
-			}
-			if ( is_archive() ) {
-				$this->_cur_is_archive = true;
-			}
-		}
-		$url = call_user_func( $home_url );
+	/**
+	 * Relations of parent ID to child IDs.
+	 *
+	 * @var 1.0
+	 */
+	protected $p_to_cs;
 
-		$this->_home_url          = trailingslashit( $url );
-		$this->_is_page           = is_page();
-		$this->_expanded_page_ids = $expanded_page_ids;
+	/**
+	 * Menu item attributes.
+	 *
+	 * @var 1.0
+	 */
+	protected $id_to_as;
 
-		if ( false !== $object_type_s ) {
-			$this->_cur_objs = is_array( $object_type_s ) ? $object_type_s : [ $object_type_s ];
-		}
-		$mis = $this->_get_all_items( $menu_name );
+	/**
+	 * Menu ID.
+	 *
+	 * @var 1.0
+	 */
+	protected $menu_id;
 
-		$this->_pid_to_menu           = $this->_get_menus( $mis );
-		$this->_pid_to_children_state = $this->_get_children_state( $this->_pid_to_menu );
-
-		list( $this->_ancestor_ids, $id2pid ) = $this->_get_menu_ancestors( $mis );
-
-		$this->_id_to_attr = $this->_get_attributes( $mis, $id2pid );
-	}
-
-	public function set_expanded_page_ids( $ids ) {
-		$this->_expanded_page_ids = $ids;
-	}
-
-	public function get_menu_id() {
-		return $this->_menu_id;
-	}
-
-
-	// -------------------------------------------------------------------------
-
-
-	public function echo_main_sub_items( $before = '<ul class="menu">', $after = '</ul>', $filter = 'esc_html', $depth = 2 ) {
-		$this->echo_main_sub_items_of( 0, $before, $after, $filter, $depth );
-	}
-
-	public function echo_main_sub_items_of( $pid, $before = '<ul class="menu">', $after = '</ul>', $filter = 'esc_html', $depth = 2 ) {
-		$this->_menu_before = $before;
-		$this->_menu_after  = $after;
-		$this->_menu_filter = $filter;
-		$this->_echo_items_recursive( $pid, $depth );
-	}
-
-	protected function _echo_items_recursive( $pid, $depth ) {
-		if ( 0 === $depth ) {
-			return;
-		}
-		$this->echo_items(
-			$pid,
-			$this->_menu_before,
-			$this->_menu_after,
-			$this->_menu_filter,
-			function ( $pid ) use ( $depth ) {
-				$this->_echo_items_recursive( $pid, $depth - 1 );
-			}
+	/**
+	 * Constructs a navigation menu.
+	 *
+	 * @param array $args {
+	 *     An array of arguments.
+	 *
+	 *     @type string   'menu_name'         Menu name.
+	 *     @type array    'anchored_page_ids' Page ids for making their links of menu items anchor links.
+	 *     @type array    'object_types'      Object types.
+	 *     @type string   'home_url'          Home URL.
+	 *     @type callable 'title_filter'      Filter function for titles. Default 'esc_html'.
+	 *     @type callable 'content_filter'    Filter function for contents. Default 'esc_html'.
+	 * }
+	 */
+	public function __construct( array $args ) {
+		$args += array(
+			'menu_name'         => '',
+			'anchored_page_ids' => array(),
+			'object_types'      => array(),
+			'home_url'          => home_url(),
+			'title_filter'      => 'esc_html',
+			'content_filter'    => 'esc_html',
 		);
+
+		$this->anchored_page_ids = $args['anchored_page_ids'];
+		if ( ! empty( $args['object_types'] ) ) {
+			$this->object_types_can_be_current = is_array( $args['object_types'] ) ? $args['object_types'] : array( $args['object_types'] );
+		}
+		$this->home_url       = trailingslashit( $args['home_url'] );
+		$this->title_filter   = $args['title_filter'];
+		$this->content_filter = $args['content_filter'];
+
+		$this->cur_url = trailingslashit( strtok( get_current_uri( true ), '?' ) );
+
+		$mis       = $this->get_all_items_( $args['menu_name'] );
+		$c2p       = $this->get_child_to_parent_( $mis );
+		$p2cs      = $this->get_parent_to_children_( $mis );
+		$ancestors = $this->get_ancestors_of_current_( $mis, $c2p );
+		$id2as     = $this->get_attributes_( $mis, $c2p, $p2cs, $ancestors );
+
+		$this->p_to_cs  = $p2cs;
+		$this->id_to_as = $id2as;
 	}
 
 
 	// -------------------------------------------------------------------------
 
 
-	public function has_main_items() {
-		return $this->has_items( 0 );
-	}
-
-	public function has_sub_items() {
-		if ( empty( $this->_pid_to_menu[ 0 ] ) ) {
-			return false;
-		}
-		$mis = $this->_pid_to_menu[ 0 ];
-
-		foreach ( $mis as $mi ) {
-			if ( ! empty( $this->_pid_to_menu[ $mi->ID ] ) ) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public function get_main_item_ids() {
-		return $this->get_item_ids( 0 );
-	}
-
-	public function echo_main_items( $before = '<ul class="menu">', $after = '</ul>', $filter = 'esc_html' ) {
-		$this->echo_items( 0, $before, $after, $filter );
-	}
-
-	public function get_menu_id_with_current_url( $pid = 0 ) {
-		if ( empty( $this->_pid_to_menu[ $pid ] ) ) {
-			return false;
-		}
-		$mis = $this->_pid_to_menu[ $pid ];
-
-		foreach ( $mis as $mi ) {
-			$id = $mi->ID;
-			if ( empty( $this->_pid_to_menu[ $id ] ) ) {
-				continue;
-			}
-			if ( $this->_pid_to_children_state[ $id ] ) {
-				return $id;
-			}
-		}
-		return false;
-	}
-
-	public function get_menu_id_with_current_main_menu( $pid = 0 ) {
-		if ( empty( $this->_pid_to_menu[ $pid ] ) ) {
-			return false;
-		}
-		$mis = $this->_pid_to_menu[ $pid ];
-
-		foreach ( $mis as $mi ) {
-			$id = $mi->ID;
-			if ( empty( $this->_pid_to_menu[ $id ] ) ) {
-				continue;
-			}
-			$a = $this->_id_to_attr[ $id ];
-			if ( in_array( self::CLS_CURRENT, $a, true ) ) {
-				return $id;
-			}
-		}
-		foreach ( $mis as $mi ) {
-			$id = $mi->ID;
-			if ( empty( $this->_pid_to_menu[ $id ] ) ) {
-				continue;
-			}
-			$a = $this->_id_to_attr[ $id ];
-			if ( in_array( self::CLS_MENU_PARENT, $a, true ) ) {
-				return $id;
-			}
-			if ( in_array( self::CLS_PAGE_PARENT, $a, true ) ) {
-				return $id;
-			}
-		}
-		return false;
-	}
-
-	public function get_menu_id_with_page_hierarchy( $pid = 0 ) {
-		if ( empty( $this->_pid_to_menu[ $pid ] ) ) {
-			return false;
-		}
-		$mis = $this->_pid_to_menu[ $pid ];
-
-		if ( ! $this->_is_page ) {
-			return false;
-		}
-		global $post;
-		$as = $post->ancestors;
-		if ( ! $as ) {
-			return false;
-		}
-		array_unshift( $as, $post->ID );
-
-		$ids = array();
-		foreach ( $mis as $mi ) {
-			$ids[ (int) $mi->object_id ] = $mi->ID;
-		}
-		foreach ( $as as $a ) {
-			if ( isset( $ids[ $a ] ) ) {
-				return $ids[ $a ];
-			}
-		}
-		return false;
-	}
-
-
-	// -------------------------------------------------------------------------
-
-
-	public function has_items( $pid ) {
-		if ( empty( $this->_pid_to_menu[ $pid ] ) ) {
-			return false;
-		}
-		return true;
-	}
-
-	public function get_item_ids( $pid ) {
-		if ( empty( $this->_pid_to_menu[ $pid ] ) ) {
-			return array();
-		}
-		return array_map(
-			function ( $e ) {
-				return $e->ID;
-			},
-			$this->_pid_to_menu[ $pid ]
-		);
-	}
-
-	public function echo_items( $pid, $before = '<ul class="menu">', $after = '</ul>', $filter = 'esc_html', $echo_sub = false ) {
-		if ( empty( $this->_pid_to_menu[ $pid ] ) ) {
-			return false;
-		}
-		$mis = $this->_pid_to_menu[ $pid ];
-
-		echo $before;
-		foreach ( $mis as $mi ) {
-			$cs   = $this->_id_to_attr[ $mi->ID ];
-			$item = $this->_get_item( $mi, $cs, $filter );
-			if ( $echo_sub && ! empty( $this->_pid_to_menu[ $mi->ID ] ) ) {
-				echo $item['before'];
-				$echo_sub( $mi->ID );
-				echo $item['after'];
-			} else {
-				echo $item['before'] . $item['after'];
-			}
-		}
-		echo $after;
-		return true;
-	}
-
-	protected function _get_item( $mi, $cs, $filter = 'esc_html' ) {
-		$cls = empty( $cs ) ? '' : implode( ' ', $cs );
-		if ( ! empty( $mi->classes ) ) {
-			$opt_cls = trim( implode( ' ', $mi->classes ) );
-			if ( ! empty( $opt_cls ) ) {
-				$cls .= ( empty( $cls ) ? '' : ' ' ) . $opt_cls;
-			}
-		}
-		$is_sep = ( '#' === $mi->url ) && mb_ereg_match( '-+', $mi->title );
-		if ( $is_sep ) {
-			$cls .= ( empty( $cls ) ? '' : ' ' ) . self::CLS_SEPARATOR;
-		}
-		if ( ! $is_sep && '#' === $mi->url ) {
-			$cls .= ( empty( $cls ) ? '' : ' ' ) . self::CLS_GROUP;
-		}
-		$li_cls  = empty( $cls ) ? '' : " class=\"$cls\"";
-		$li_id   = " id=\"menu-item-{$mi->ID}\"";
-		$li_attr = $li_id . $li_cls;
-		$obj_id  = (int) $mi->object_id;
-		$title   = $filter( $mi->title, $mi );
-		$cont    = esc_html( trim( $mi->post_content ) );
-		$after   = '</li>';
-
-		if ( 'post_type_archive' === $mi->type ) {
-			$obj = get_post_type_object( $mi->object );
-			if ( $obj && $obj->labels->archives === $mi->title ) {
-				$title = apply_filters( 'post_type_archive_title', $obj->labels->archives, $mi->object );
-				$title = $filter( $title, $mi );
-			}
-		}
-
-		if ( $is_sep ) {
-			$before = "<li$li_attr><div></div>";
-		} elseif ( '#' === $mi->url ) {
-			if ( empty( $cont ) ) {
-				$before = "<li$li_attr><label for=\"panel-{$mi->ID}-ctrl\">$title</label>";
-			} else {
-				$before = "<li$li_attr><label for=\"panel-{$mi->ID}-ctrl\">$title<div class=\"description\">$cont</div></label>";
-			}
-		} else {
-			if ( false === $this->_expanded_page_ids  || ! in_array( $obj_id, $this->_expanded_page_ids, true ) ) {
-				$href = esc_url( $mi->url );
-			} else {
-				$href = esc_url( "#post-$obj_id" );
-			}
-			$target = esc_attr( $mi->target );
-			if ( empty( $cont ) ) {
-				$before = "<li$li_attr><a href=\"$href\" target=\"$target\">$title</a>";
-			} else {
-				$before = "<li$li_attr><a href=\"$href\" target=\"$target\">$title<div class=\"description\">$cont</div></a>";
-			}
-		}
-		return compact( 'before', 'after' );
-	}
-
-
-	// -------------------------------------------------------------------------
-
-
-	public function get_self_attributes( $id ) {
-		return $this->_id_to_attr[ $id ];
-	}
-
-
-	// -------------------------------------------------------------------------
-
-
-	protected function _get_all_items( $menu_name ) {
+	/**
+	 * Retrieves all menu items.
+	 *
+	 * @param string $menu_name Menu name.
+	 * @return array Menu items.
+	 */
+	protected function get_all_items_( string $menu_name ): array {
 		$ls = get_nav_menu_locations();
 		if ( ! $ls || ! isset( $ls[ $menu_name ] ) ) {
 			return array();
@@ -395,55 +200,218 @@ class Nav_Menu {
 		if ( false === $menu ) {
 			return array();
 		}
-		$this->_menu_id = $menu->term_id;
-
-		$ret = array();
-		if ( self::$_is_cache_enabled ) {
-			$ret = self::get_nav_menu_items( $menu->term_id );
-		} else {
-			$ret = wp_get_nav_menu_items( $menu->term_id );
-		}
-		if ( false === $ret ) {
-			return array();
-		}
-		return $ret;
+		$this->menu_id = $menu->term_id;
+		return self::get_nav_menu_items( $menu->term_id );
 	}
 
-	protected function _get_menus( $mis ) {
-		$ret = array();
+	/**
+	 * Collects relations of parent ID to child IDs.
+	 *
+	 * @access protected
+	 *
+	 * @param array $mis Menu items.
+	 * @return array Relations of parent ID to child IDs.
+	 */
+	protected function get_parent_to_children_( array $mis ): array {
+		$p2cs = array();
 		foreach ( $mis as $mi ) {
-			$pid = (int) $mi->menu_item_parent;
-			if ( isset( $ret[ $pid ] ) ) {
-				$ret[ $pid ][] = $mi;
+			$p = (int) $mi->menu_item_parent;
+			if ( isset( $ret[ $p ] ) ) {
+				$p2cs[ $p ][] = $mi;
 			} else {
-				$ret[ $pid ] = array( $mi );
+				$p2cs[ $p ] = array( $mi );
 			}
 		}
-		return $ret;
+		return $p2cs;
 	}
 
-	protected function _get_children_state( $p2m ) {
+	/**
+	 * Collects relations of child ID to parent ID.
+	 *
+	 * @access protected
+	 *
+	 * @param array $mis Menu items.
+	 * @return array Relations of child ID to parent ID.
+	 */
+	protected function get_child_to_parent_( array $mis ): array {
 		$ret = array();
-		foreach ( $p2m as $pid => $mis ) {
-			$ret[ $pid ] = $this->_has_current_url( $mis );
+		foreach ( $mis as $mi ) {
+			$ret[ $mi->ID ] = (int) $mi->menu_item_parent;
 		}
 		return $ret;
 	}
 
-	protected function _has_current_url( $mis ) {
+	/**
+	 * Collects ancestor items of the current.
+	 *
+	 * @access protected
+	 *
+	 * @param array $mis Menu items.
+	 * @param array $c2p Relations of child ID to parent ID.
+	 * @return array A pair of an array of menu ancestors and Array of menu item ID to its parent ID.
+	 */
+	protected function get_ancestors_of_current_( array $mis, array $c2p ): array {
+		$post_type     = get_post_type();
+		$cur_tx        = null;
+		$cur_term_id   = null;
+		$cur_term_urls = array();
+
+		if ( is_tax() ) {
+			$qo          = get_queried_object();
+			$cur_tx      = $qo->taxonomy;
+			$cur_term_id = $qo->term_id;
+		}
+		if ( is_single() ) {
+			$txs = get_object_taxonomies( $post_type );
+			$pid = get_the_ID();
+			$ts  = array();
+			foreach ( $txs as $tx ) {
+				foreach ( wp_get_post_terms( $pid, $tx ) as $t ) {
+					$ts[ $t->term_taxonomy_id ] = $t;
+
+					while ( 0 !== $t->parent ) {
+						$t = get_term( $t->parent, $t->taxonomy );
+
+						$ts[ $t->term_taxonomy_id ] = $t;
+					}
+				}
+			}
+			$cur_term_urls = array_map( 'get_term_link', $ts );
+		}
+		$archive_slug = self::$custom_post_type_archive[ $post_type ] ?? null;
+		$has_curs     = array();
+
 		foreach ( $mis as $mi ) {
-			if ( $this->_is_current( $mi ) ) {
-				return true;
+			$last_slug = array_pop( explode( '/', untrailingslashit( $mi->url ) ) );
+			if (
+				$archive_slug === $last_slug ||
+				( $mi->object === $cur_tx && $mi->object_id === $cur_term_id ) ||
+				$mi->object === $post_type ||
+				in_array( $mi->url, $cur_term_urls, true )  // TODO.
+			) {
+				$has_curs[] = $mi->ID;
+			}
+			if ( $this->is_current_( $mi ) ) {
+				$has_curs[] = (int) $mi->menu_item_parent;
 			}
 		}
-		return false;
+		$ret = array();
+		foreach ( $has_curs as $id ) {
+			while ( 0 !== $id ) {
+				$ret[] = $id;
+				$id    = $c2p[ $id ] ?? 0;
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	 * Retrieves menu item attributes.
+	 *
+	 * @access protected
+	 *
+	 * @param array $mis       Menu items.
+	 * @param array $c2p       Relations of child ID to parent ID.
+	 * @param array $p2cs      Relations of parent ID to child IDs.
+	 * @param array $ancestors Ancestor menu item IDs.
+	 * @return array Relation of item ID to its attributes.
+	 */
+	protected function get_attributes_( array $mis, array $c2p, array $p2cs, array $ancestors ): array {
+		$p_has_current = array();
+		foreach ( $p2cs as $p => $cs ) {
+			foreach ( $cs as $c ) {
+				if ( $this->is_current_( $c ) ) {
+					$p_has_current[ $p ] = true;
+					break;
+				}
+			}
+		}
+		global $post;
+		if ( is_page() ) {
+			$page_parent    = $post->post_parent;
+			$page_ancestors = $post->ancestors ?? array();
+		}
+		$id2as = array();
+		$pas   = array();
+		foreach ( $mis as $mi ) {
+			$as = array();
+
+			$url = trailingslashit( $mi->url );
+			if ( $url === $this->home_url ) {
+				$as[] = self::CLS_HOME;
+			}
+			if ( $this->is_current_( $mi ) ) {
+				$as[] = self::CLS_CURRENT;
+			}
+			if ( isset( $p_has_current[ $mi->ID ] ) ) {
+				$as[] = self::CLS_MENU_PARENT;
+			}
+			if ( in_array( $mi->ID, $ancestors, true ) ) {
+				$as[] = self::CLS_MENU_ANCESTOR;
+			}
+			if ( is_page() ) {
+				if ( $page_parent === (int) $mi->object_id ) {
+					$as[] = self::CLS_PAGE_PARENT;
+				}
+				if ( in_array( (int) $mi->object_id, $page_ancestors, true ) ) {
+					$as[]  = self::CLS_PAGE_ANCESTOR;
+					$pas[] = $mi;
+				}
+			}
+			if ( '#' === $mi->url ) {
+				if ( mb_ereg_match( '-+', $mi->title ) ) {
+					$as[] = self::CLS_SEPARATOR;
+				} else {
+					$as[] = self::CLS_GROUP;
+				}
+			}
+			$id2as[ $mi->ID ] = $as;
+		}
+		foreach ( $pas as $pa ) {
+			$id = $c2p[ $pa->ID ];
+			while ( 0 !== $id ) {
+				if ( ! in_array( self::CLS_MP_ANCESTOR, $id2as[ $id ], true ) ) {
+					$id2as[ $id ][] = self::CLS_MP_ANCESTOR;
+				}
+				$id = $c2p[ $id ] ?? 0;
+			}
+		}
+		return $id2as;
+	}
+
+	/**
+	 * Checks whether the menu item is currently selected.
+	 *
+	 * @access protected
+	 *
+	 * @param \WP_Post $mi Menu item.
+	 * @return bool True if it is currently selected.
+	 */
+	protected function is_current_( \WP_Post $mi ): bool {
+		$url = trailingslashit( $mi->url );
+		if ( $url !== $this->cur_url ) {
+			return false;
+		}
+		if (
+			! empty( $this->object_types_can_be_current ) &&
+			! in_array( $mi->object, $this->object_types_can_be_current, true )
+		) {
+			return false;
+		}
+		return true;
 	}
 
 
 	// -------------------------------------------------------------------------
 
 
-	public static function _cb_wp_update_nav_menu( $menu_id, $menu_data = null ) {
+	/**
+	 * The callback function for 'wp_update_nav_menu' hook.
+	 *
+	 * @param int    $menu_id   ID of the updated menu.
+	 * @param ?array $menu_data An array of menu data.
+	 */
+	public static function cb_wp_update_nav_menu_( int $menu_id, ?array $menu_data = null ) {
 		if ( is_array( $menu_data ) && isset( $menu_data['menu-name'] ) ) {
 			$menu = wp_get_nav_menu_object( $menu_data['menu-name'] );
 			if ( isset( $menu->term_id ) ) {
@@ -453,139 +421,226 @@ class Nav_Menu {
 		}
 	}
 
+	/**
+	 * Retrieves all menu items of a navigation menu.
+	 *
+	 * @param int|string $id Menu ID, slug, name, or object.
+	 * @return array|false Array of menu items, otherwise false.
+	 */
 	public static function get_nav_menu_items( $id ) {
-		$key   = 'cache-menu-id-' . $id;
-		$items = get_transient( $key );
-		if ( false !== $items ) {
-			return $items;
+		if ( self::$is_cache_enabled ) {
+			$key   = 'cache-menu-id-' . $id;
+			$items = get_transient( $key );
+			if ( false !== $items ) {
+				return $items;
+			}
+			$items = wp_get_nav_menu_items( $id );
+			if ( $items ) {
+				set_transient( $key, $items, self::CACHE_EXPIRATION );
+			}
+		} else {
+			$items = wp_get_nav_menu_items( $id );
 		}
-		$items = wp_get_nav_menu_items( $id );
-		set_transient( $key, $items, self::CACHE_EXPIRATION );
-		return $items;
+		return $items ? $items : array();
 	}
 
 
 	// -------------------------------------------------------------------------
 
 
-	protected function _get_menu_ancestors( $mis ) {
-		$id2pid  = array();
-		$curs    = array();
-		$dummy_n = 0;
+	/**
+	 * Retrieves menu ID.
+	 *
+	 * @return int Menu ID.
+	 */
+	public function get_menu_id(): int {
+		return $this->menu_id;
+	}
+
+	/**
+	 * Retrieves item attributes.
+	 *
+	 * @param int $id Item ID.
+	 * @return array Attributes.
+	 */
+	public function get_attributes( int $id ): array {
+		return $this->id_to_as[ $id ] ?? array();
+	}
+
+	/**
+	 * Retrieves item IDs.
+	 *
+	 * @param int $parent_id Parent ID.
+	 * @return array Item IDs.
+	 */
+	public function get_item_ids( int $parent_id = 0 ): array {
+		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
+			return array();
+		}
+		return array_map(
+			function ( $e ) {
+				return $e->ID;
+			},
+			$this->p_to_cs[ $parent_id ]
+		);
+	}
+
+	/**
+	 * Retrieves item ID with the attributes.
+	 *
+	 * @param int   $parent_id  Parent ID.
+	 * @param array $attributes Attributes.
+	 * @return ?int Item ID.
+	 */
+	public function get_item_id( int $parent_id = 0, array $attributes ): ?int {
+		if ( ! is_page() ) {
+			return null;
+		}
+		$mis = $this->p_to_cs[ $parent_id ] ?? array();
 
 		foreach ( $mis as $mi ) {
-			$url_ps = explode( '/', untrailingslashit( $mi->url ) );
-
-			$is_custom_pta = (
-				isset( self::$_custom_post_type_archive[ $this->_cur_post_type ] ) &&
-				self::$_custom_post_type_archive[ $this->_cur_post_type ] === $url_ps[ count( $url_ps ) - 1 ]
-			);
-			$is_archive = (
-				( $mi->object === $this->_cur_tax && $mi->object_id === $this->_cur_term_id ) ||
-				$mi->object === $this->_cur_post_type ||
-				( ! $this->_cur_is_archive && in_array( $mi->url, $this->_cur_term_archive_urls, true ) )
-			);
-			if ( $is_custom_pta || $is_archive ) {
-				$curs[] = "dummy_$dummy_n";
-
-				$id2pid[ "dummy_$dummy_n" ] = $mi->ID;
-				++$dummy_n;
+			$id = $mi->ID;
+			if ( empty( $this->p_to_cs[ $id ] ) ) {
+				continue;
 			}
-			if ( $this->_is_current( $mi ) ) {
-				$curs[] = $mi->ID;
-			}
-			$id2pid[ $mi->ID ] = (int) $mi->menu_item_parent;
-		}
-		$ret = array();
-		foreach ( $curs as $cur ) {
-			$id = $id2pid[ $cur ];
-			while ( $id !== 0 ) {
-				$ret[] = $id;
-				if ( ! isset( $id2pid[ $id ] ) ) {
-					break;
-				}
-				$id = $id2pid[ $id ];
+			$as = $this->id_to_as[ $id ];
+			if ( ! empty( array_intersect( $attributes, $as ) ) ) {
+				return $id;
 			}
 		}
-		return array( $ret, $id2pid );
+		return null;
 	}
 
-	protected function _get_attributes( $mis, $id2pid ) {
-		$ret = array();
-		$pas = array();
+	/**
+	 * Checks whether the parent has any children.
+	 *
+	 * @param int $parent_id Parent ID.
+	 * @return bool True if it has children.
+	 */
+	public function has_items( int $parent_id = 0 ): bool {
+		return ! empty( $this->p_to_cs[ $parent_id ] );
+	}
+
+	/**
+	 * Checks whether the parent has any grandchildren, or one of the children of the parent has any children.
+	 *
+	 * @param int $parent_id Parent ID.
+	 * @return bool True if it has grandchildren.
+	 */
+	public function has_sub_items( int $parent_id = 0 ): bool {
+		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
+			return false;
+		}
+		$mis = $this->p_to_cs[ $parent_id ];
 		foreach ( $mis as $mi ) {
-			$cs = array();
-
-			$url = trailingslashit( $mi->url );
-			if ( $url === $this->_home_url ) {
-				$cs[] = self::CLS_HOME;
-			}
-			if ( $this->_is_current( $mi ) ) {
-				$cs[] = self::CLS_CURRENT;
-			}
-
-			if ( $this->_is_menu_parent( $mi ) ) {
-				$cs[] = self::CLS_MENU_PARENT;
-			}
-			if ( $this->_is_menu_ancestor( $mi ) ) {
-				$cs[] = self::CLS_MENU_ANCESTOR;
-			}
-			if ( $this->_is_page_parent( $mi ) ) {
-				$cs[] = self::CLS_PAGE_PARENT;
-			}
-			if ( $this->_is_page_ancestor( $mi ) ) {
-				$cs[]  = self::CLS_PAGE_ANCESTOR;
-				$pas[] = $mi;
-			}
-			$ret[ $mi->ID ] = $cs;
-		}
-		foreach ( $pas as $pa ) {
-			$id = $id2pid[ $pa->ID ];
-			while ( $id !== 0 ) {
-				$ret[ $id ][] = self::CLS_MP_ANCESTOR;
-				if ( ! isset( $id2pid[ $id ] ) ) {
-					break;
-				}
-				$id = $id2pid[ $id ];
+			if ( ! empty( $this->p_to_cs[ $mi->ID ] ) ) {
+				return true;
 			}
 		}
-		return $ret;
+		return false;
 	}
 
-	protected function _is_menu_parent( $mi ) {
-		$id = $mi->ID;
-		return ( isset( $this->_pid_to_children_state[ $id ] ) && $this->_pid_to_children_state[ $id ] );
+
+	// -------------------------------------------------------------------------
+
+
+	/**
+	 * Displays menu items.
+	 *
+	 * @param array $args {
+	 *     An array of arguments.
+	 *
+	 *     @type string 'before' Content to prepend to the output. Default ''.
+	 *     @type string 'after'  Content to append to the output. Default ''.
+	 *     @type int    'id'     Parent ID. Default 0.
+	 *     @type int    'depth'  Hierarchy depth. Default 1.
+	 * }
+	 */
+	public function echo_items( array $args ) {
+		$args += array(
+			'before' => '<ul class="menu">',
+			'after'  => '</ul>',
+			'id'     => 0,
+			'depth'  => 1,
+		);
+		$this->echo_items_( $args['before'], $args['after'], $args['id'], $args['depth'] );
 	}
 
-	protected function _is_menu_ancestor( $mi ) {
-		return ( in_array( $mi->ID, $this->_ancestor_ids, true ) );
+	/**
+	 * Displays menu items.
+	 *
+	 * @access protected
+	 *
+	 * @param string $before    Content to prepend to the output. Default ''.
+	 * @param string $after     Content to append to the output. Default ''.
+	 * @param int    $parent_id Parent ID. Default 0.
+	 * @param int    $depth     Hierarchy depth. Default 1.
+	 */
+	protected function echo_items_( string $before, string $after, int $parent_id, int $depth ) {
+		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
+			return;
+		}
+		$mis = $this->p_to_cs[ $parent_id ];
+
+		echo $before;  // phpcs:ignore
+		foreach ( $mis as $mi ) {
+			$as   = $this->id_to_as[ $mi->ID ];
+			$item = $this->get_item_( $mi, $as );
+			if ( 1 < $depth && ! empty( $this->p_to_cs[ $mi->ID ] ) ) {
+				echo $item['before'] . "\n";  // phpcs:ignore
+				$this->echo_items_( $before, $after, $mi->ID, $depth - 1 );
+				echo $item['after'];  // phpcs:ignore
+			} else {
+				echo $item['before'] . $item['after'];  // phpcs:ignore
+			}
+		}
+		echo $after;  // phpcs:ignore
 	}
 
-	protected function _is_page_parent( $mi ) {
-		if ( ! $this->_is_page ) {
-			return false;
+	/**
+	 * Makes list item markup.
+	 *
+	 * @access protected
+	 *
+	 * @param \WP_Post $mi Menu item.
+	 * @param array    $as Attributes of the menu item.
+	 * @return array Array of markup.
+	 */
+	protected function get_item_( \WP_Post $mi, array $as ): array {
+		$as = is_array( $as ) ? $as : array();
+		if ( ! empty( $mi->classes ) ) {
+			$as = array_merge( $as, $mi->classes );
 		}
-		global $post;
-		return ( $post->post_parent === (int) $mi->object_id );
-	}
+		$cls      = implode( ' ', $as );
+		$li_attr  = "id=\"menu-item-{$mi->ID}\"" . ( empty( $cls ) ? '' : " class=\"$cls\"" );
+		$title    = $this->title_filter( $mi->title, $mi );
+		$cont     = $this->content_filter( trim( $mi->post_content ) );
+		$cont_div = empty( $cont ) ? '' : "<div class=\"description\">$cont</div>";
 
-	protected function _is_page_ancestor( $mi ) {
-		if ( ! $this->_is_page ) {
-			return false;
+		if ( 'post_type_archive' === $mi->type ) {
+			$pto = get_post_type_object( $mi->object );
+			if ( $pto && $pto->labels->archives === $mi->title ) {
+				$title = apply_filters( 'post_type_archive_title', $pto->labels->archives, $mi->object );
+				$title = $title_filter( $title, $mi );
+			}
 		}
-		global $post;
-		return ( $post->ancestors && in_array( (int) $mi->object_id, $post->ancestors, true ) );
-	}
 
-	protected function _is_current( $mi ) {
-		$url = trailingslashit( $mi->url );
-		if ( $url !== $this->_cur_url ) {
-			return false;
+		if ( in_array( self::CLS_SEPARATOR, $as, true ) ) {
+			$before = "<li $li_attr><div></div>";
+		} elseif ( in_array( self::CLS_GROUP, $as, true ) ) {
+			$before = "<li $li_attr><label for=\"panel-{$mi->ID}-ctrl\">$title$cont_div</label>";
+		} else {
+			$obj_id = (int) $mi->object_id;
+			if ( in_array( $obj_id, $this->anchored_page_ids, true ) ) {
+				$href = esc_url( "#post-$obj_id" );
+			} else {
+				$href = esc_url( $mi->url );
+			}
+			$target = esc_attr( $mi->target );
+			$before = "<li $li_attr><a href=\"$href\" target=\"$target\">$title$cont_div</a>";
 		}
-		if ( $this->_cur_objs && ! in_array( $mi->object, $this->_cur_objs, true ) ) {
-			return false;
-		}
-		return true;
+		$after = "</li>\n";
+		return compact( 'before', 'after' );
 	}
 
 }
