@@ -19,7 +19,7 @@ function initialize() {
 }
 
 /**
- * The callback function for 'wp_head' action.
+ * Callback function for 'wp_head' action.
 
  * @access private
  */

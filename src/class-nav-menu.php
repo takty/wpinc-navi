@@ -406,7 +406,7 @@ class Nav_Menu {
 
 
 	/**
-	 * The callback function for 'wp_update_nav_menu' hook.
+	 * Callback function for 'wp_update_nav_menu' hook.
 	 *
 	 * @param int    $menu_id   ID of the updated menu.
 	 * @param ?array $menu_data An array of menu data.
