@@ -45,7 +45,7 @@ class Nav_Menu {
 	 *
 	 * @var 1.0
 	 */
-	protected static $is_cache_enabled = false;
+	protected static $do_cache = false;
 
 	/**
 	 * An array of custom post types to archive slug.
@@ -55,13 +55,12 @@ class Nav_Menu {
 	protected static $custom_post_type_archive = array();
 
 	/**
-	 * Sets the cache of the menu enabled.
-	 *
-	 * @param bool $flag True if enabled.
+	 * Enable the cache of the menu enabled.
 	 */
-	public static function set_cache_enabled( bool $flag ) {
-		self::$is_cache_enabled = $flag;
+	public static function enable_cache() {
+		self::$do_cache = true;
 		add_action( 'wp_update_nav_menu', array( '\wpinc\navi\Nav_Menu', 'cb_wp_update_nav_menu_' ), 10, 2 );
+		add_action( 'save_post_page', array( '\wpinc\navi\Nav_Menu', 'cb_save_post_page_' ), 10, 3 );
 	}
 
 	/**
@@ -143,7 +142,7 @@ class Nav_Menu {
 	 * @param array $args {
 	 *     An array of arguments.
 	 *
-	 *     @type string   'menu_name'         Menu name.
+	 *     @type string   'menu_location'     Menu location.
 	 *     @type array    'anchored_page_ids' Page ids for making their links of menu items anchor links.
 	 *     @type array    'object_types'      Object types.
 	 *     @type string   'home_url'          Home URL.
@@ -153,7 +152,7 @@ class Nav_Menu {
 	 */
 	public function __construct( array $args ) {
 		$args += array(
-			'menu_name'         => '',
+			'menu_location'     => '',
 			'anchored_page_ids' => array(),
 			'object_types'      => array(),
 			'home_url'          => home_url(),
@@ -171,7 +170,7 @@ class Nav_Menu {
 
 		$this->cur_url = trailingslashit( strtok( get_current_uri( true ), '?' ) );
 
-		$mis       = $this->get_all_items_( $args['menu_name'] );
+		$mis       = $this->get_all_items_( $args['menu_location'] );
 		$c2p       = $this->get_child_to_parent_( $mis );
 		$p2cs      = $this->get_parent_to_children_( $mis );
 		$ancestors = $this->get_ancestors_of_current_( $mis, $c2p );
@@ -188,15 +187,15 @@ class Nav_Menu {
 	/**
 	 * Retrieves all menu items.
 	 *
-	 * @param string $menu_name Menu name.
+	 * @param string $menu_location Menu location.
 	 * @return array Menu items.
 	 */
-	protected function get_all_items_( string $menu_name ): array {
+	protected function get_all_items_( string $menu_location ): array {
 		$ls = get_nav_menu_locations();
-		if ( ! $ls || ! isset( $ls[ $menu_name ] ) ) {
+		if ( ! isset( $ls[ $menu_location ] ) ) {
 			return array();
 		}
-		$menu = wp_get_nav_menu_object( $ls[ $menu_name ] );
+		$menu = wp_get_nav_menu_object( $ls[ $menu_location ] );
 		if ( false === $menu ) {
 			return array();
 		}
@@ -422,13 +421,32 @@ class Nav_Menu {
 	}
 
 	/**
+	 * Callback function for 'save_post_page' hook.
+	 *
+	 * @param int     $post_ID Post ID.
+	 * @param WP_Post $post    Post object.
+	 * @param bool    $update  Whether this is an existing post being updated.
+	 */
+	public static function cb_save_post_page_( int $post_ID, WP_Post $post, bool $update ) {
+		if ( $update ) {
+			foreach ( get_nav_menu_locations() as $loc => $menu_name ) {
+				$menu = wp_get_nav_menu_object( $menu_name );
+				if ( isset( $menu->term_id ) ) {
+					$key = 'cache-menu-id-' . $menu->term_id;
+					delete_transient( $key );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Retrieves all menu items of a navigation menu.
 	 *
 	 * @param int|string $id Menu ID, slug, name, or object.
 	 * @return array|false Array of menu items, otherwise false.
 	 */
 	public static function get_nav_menu_items( $id ) {
-		if ( self::$is_cache_enabled ) {
+		if ( self::$do_cache ) {
 			$key   = 'cache-menu-id-' . $id;
 			$items = get_transient( $key );
 			if ( false !== $items ) {
