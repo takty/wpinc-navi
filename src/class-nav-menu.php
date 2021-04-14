@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-14
+ * @version 2021-04-15
  */
 
 namespace wpinc\navi;
@@ -60,19 +60,19 @@ class Nav_Menu {
 	}
 
 	/**
-	 * Retrieves current URI.
+	 * Retrieves the current URL.
 	 *
 	 * @access protected
 	 *
 	 * @param bool $raw Whether the returned value is raw.
-	 * @return string The current URI.
+	 * @return string The current URL.
 	 */
-	protected static function get_current_uri_( bool $raw = false ): string {
+	protected static function get_current_url_( bool $raw = false ): string {
 		// phpcs:disable
 		$host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'];  // When reverse proxy exists.
 		$req  = ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) ? $_SERVER['REQUEST_URI_ORIG'] : $_SERVER['REQUEST_URI'];
-		return ( is_ssl() ? 'https://' : 'http://' ) . $host . $req;
 		// phpcs:enable
+		return ( is_ssl() ? 'https://' : 'http://' ) . wp_unslash( $host ) . wp_unslash( $req );
 	}
 
 	/**
@@ -170,7 +170,7 @@ class Nav_Menu {
 		$this->title_filter   = $args['title_filter'];
 		$this->content_filter = $args['content_filter'];
 
-		$this->cur_url = trailingslashit( strtok( self::get_current_uri_( true ), '?' ) );
+		$this->cur_url = trailingslashit( strtok( self::get_current_url_( true ), '?' ) );
 
 		$mis       = $this->get_all_items_( $args['menu_location'] );
 		$c2p       = $this->get_child_to_parent_( $mis );
