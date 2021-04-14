@@ -67,14 +67,14 @@ function get_the_page_break_navigation( array $args = array() ): string {
 		'number_after'       => '',
 	);
 
-	$lis = get_archive_link_items( '\wpinc\navi\page_break\get_page_break_link', $numpages, $page, (int) $args['mid_size'], (int) $args['end_size'] );
+	$lis = get_archive_link_items( '\wpinc\navi\get_page_break_link', $numpages, $page, (int) $args['mid_size'], (int) $args['end_size'] );
 
 	$ls   = array();
-	$ls[] = make_adjacent_link_markup( '\wpinc\navi\page_break\get_page_break_link', true, $args['prev_text'], $numpages, $page );
+	$ls[] = make_adjacent_link_markup( '\wpinc\navi\get_page_break_link', true, $args['prev_text'], $numpages, $page );
 	$ls[] = '<div class="nav-items">';
 	$ls[] = make_archive_links_markup( $lis, $args['type'], '', $args['number_before'], $args['number_after'] );
 	$ls[] = '</div>';
-	$ls[] = make_adjacent_link_markup( '\wpinc\navi\page_break\get_page_break_link', false, $args['next_text'], $numpages, $page );
+	$ls[] = make_adjacent_link_markup( '\wpinc\navi\get_page_break_link', false, $args['next_text'], $numpages, $page );
 
 	$ls  = improve( "\n", $ls ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-13
+ * @version 2021-04-14
  */
 
 namespace wpinc\navi\link_page_break;
@@ -15,7 +15,7 @@ require_once __DIR__ . '/page-break.php';
  * Initializes next and previous link tags.
  */
 function initialize() {
-	add_action( 'wp_head', '\wpinc\navi\page_break\_cb_wp_head' );
+	add_action( 'wp_head', '\wpinc\navi\link_page_break\_cb_wp_head' );
 }
 
 /**
