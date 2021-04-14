@@ -4,18 +4,18 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-14
+ * @version 2021-04-15
  */
 
-namespace wpinc\navi\link_page_break;
+namespace wpinc\navi;
 
 require_once __DIR__ . '/page-break.php';
 
 /**
- * Initializes next and previous link tags.
+ * Activates next and previous link tags.
  */
-function initialize() {
-	add_action( 'wp_head', '\wpinc\navi\link_page_break\_cb_wp_head' );
+function activate_link_page_break() {
+	add_action( 'wp_head', '\wpinc\navi\_cb_wp_head__link_page_break' );
 }
 
 /**
@@ -23,7 +23,7 @@ function initialize() {
 
  * @access private
  */
-function _cb_wp_head() {
+function _cb_wp_head__link_page_break() {
 	if ( ! is_singular() || is_attachment() ) {
 		return;
 	}
