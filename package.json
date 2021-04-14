@@ -1,7 +1,7 @@
 {
 	"name": "wpinc-navi",
 	"version": "0.1.0",
-	"description": "The Plug-in of WordPress for Navigation",
+	"description": "A Library of WordPress for Navigation",
 	"author": "Takuto Yanagida",
 	"main": "gulpfile.js",
 	"scripts": {
