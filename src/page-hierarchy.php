@@ -1,10 +1,10 @@
 <?php
 /**
- * Page Navigation
+ * Page Hierarchy Navigation
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-13
+ * @version 2021-04-15
  */
 
 namespace wpinc\navi;
