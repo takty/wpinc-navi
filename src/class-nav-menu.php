@@ -4,24 +4,10 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-13
+ * @version 2021-04-14
  */
 
 namespace wpinc\navi;
-
-/**
- * Retrieves current URI.
- *
- * @param bool $raw Whether the returned value is raw.
- * @return string The current URI.
- */
-function get_current_uri( bool $raw = false ): string {
-	// phpcs:disable
-	$host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'];  // When reverse proxy exists.
-	$req  = ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) ? $_SERVER['REQUEST_URI_ORIG'] : $_SERVER['REQUEST_URI'];
-	return ( is_ssl() ? 'https://' : 'http://' ) . $host . $req;
-	// phpcs:enable
-}
 
 /**
  * Navigation menu.
@@ -55,7 +41,7 @@ class Nav_Menu {
 	protected static $custom_post_type_archive = array();
 
 	/**
-	 * Enable the cache of the menu enabled.
+	 * Enable cache of navigation menus.
 	 */
 	public static function enable_cache() {
 		self::$do_cache = true;
@@ -71,6 +57,22 @@ class Nav_Menu {
 	 */
 	public static function add_custom_post_type_archive( string $post_type, string $slug ) {
 		self::$custom_post_type_archive[ $post_type ] = $slug;
+	}
+
+	/**
+	 * Retrieves current URI.
+	 *
+	 * @access protected
+	 *
+	 * @param bool $raw Whether the returned value is raw.
+	 * @return string The current URI.
+	 */
+	protected static function get_current_uri_( bool $raw = false ): string {
+		// phpcs:disable
+		$host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'];  // When reverse proxy exists.
+		$req  = ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) ? $_SERVER['REQUEST_URI_ORIG'] : $_SERVER['REQUEST_URI'];
+		return ( is_ssl() ? 'https://' : 'http://' ) . $host . $req;
+		// phpcs:enable
 	}
 
 	/**
@@ -168,7 +170,7 @@ class Nav_Menu {
 		$this->title_filter   = $args['title_filter'];
 		$this->content_filter = $args['content_filter'];
 
-		$this->cur_url = trailingslashit( strtok( get_current_uri( true ), '?' ) );
+		$this->cur_url = trailingslashit( strtok( self::get_current_uri_( true ), '?' ) );
 
 		$mis       = $this->get_all_items_( $args['menu_location'] );
 		$c2p       = $this->get_child_to_parent_( $mis );
