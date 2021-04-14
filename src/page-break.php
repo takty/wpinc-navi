@@ -4,10 +4,10 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-13
+ * @version 2021-04-14
  */
 
-namespace wpinc\navi\page_break;
+namespace wpinc\navi;
 
 /**
  * Displays a page break navigation, when applicable.
