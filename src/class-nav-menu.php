@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-15
+ * @version 2021-04-17
  */
 
 namespace wpinc\navi;
@@ -570,20 +570,24 @@ class Nav_Menu {
 	 * @param array $args {
 	 *     An array of arguments.
 	 *
-	 *     @type string 'before' Content to prepend to the output. Default ''.
-	 *     @type string 'after'  Content to append to the output. Default ''.
-	 *     @type int    'id'     Parent ID. Default 0.
-	 *     @type int    'depth'  Hierarchy depth. Default 1.
+	 *     @type string   'before'         Content to prepend to the output. Default ''.
+	 *     @type string   'after'          Content to append to the output. Default ''.
+	 *     @type int      'id'             Parent ID. Default 0.
+	 *     @type int      'depth'          Hierarchy depth. Default 1.
+	 *     @type callable 'title_filter'   Filter function for titles.
+	 *     @type callable 'content_filter' Filter function for contents.
 	 * }
 	 */
 	public function echo_items( array $args ) {
 		$args += array(
-			'before' => '<ul class="menu">',
-			'after'  => '</ul>',
-			'id'     => 0,
-			'depth'  => 1,
+			'before'         => '<ul class="menu">',
+			'after'          => '</ul>',
+			'id'             => 0,
+			'depth'          => 1,
+			'title_filter'   => $this->title_filter,
+			'content_filter' => $this->content_filter,
 		);
-		$this->echo_items_( $args['before'], $args['after'], $args['id'], $args['depth'] );
+		$this->echo_items_( $args['before'], $args['after'], $args['id'], $args['depth'], $args['title_filter'], $args['content_filter'] );
 	}
 
 	/**
@@ -591,12 +595,14 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param string $before    Content to prepend to the output. Default ''.
-	 * @param string $after     Content to append to the output. Default ''.
-	 * @param int    $parent_id Parent ID. Default 0.
-	 * @param int    $depth     Hierarchy depth. Default 1.
+	 * @param string   $before         Content to prepend to the output.
+	 * @param string   $after          Content to append to the output.
+	 * @param int      $parent_id      Parent ID.
+	 * @param int      $depth          Hierarchy depth.
+	 * @param callable $title_filter   Filter function for titles.
+	 * @param callable $content_filter Filter function for contents.
 	 */
-	protected function echo_items_( string $before, string $after, int $parent_id, int $depth ) {
+	protected function echo_items_( string $before, string $after, int $parent_id, int $depth, $title_filter, $content_filter ) {
 		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
 			return;
 		}
@@ -605,10 +611,10 @@ class Nav_Menu {
 		echo $before;  // phpcs:ignore
 		foreach ( $mis as $mi ) {
 			$as   = $this->id_to_as[ $mi->ID ];
-			$item = $this->get_item_( $mi, $as );
+			$item = $this->get_item_( $mi, $as, $title_filter, $content_filter );
 			if ( 1 < $depth && ! empty( $this->p_to_cs[ $mi->ID ] ) ) {
 				echo $item['before'] . "\n";  // phpcs:ignore
-				$this->echo_items_( $before, $after, $mi->ID, $depth - 1 );
+				$this->echo_items_( $before, $after, $mi->ID, $depth - 1, $title_filter, $content_filter );
 				echo $item['after'];  // phpcs:ignore
 			} else {
 				echo $item['before'] . $item['after'];  // phpcs:ignore
@@ -622,19 +628,21 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param \WP_Post $mi Menu item.
-	 * @param array    $as Attributes of the menu item.
+	 * @param \WP_Post $mi             Menu item.
+	 * @param array    $as             Attributes of the menu item.
+	 * @param callable $title_filter   Filter function for titles.
+	 * @param callable $content_filter Filter function for contents.
 	 * @return array Array of markup.
 	 */
-	protected function get_item_( \WP_Post $mi, array $as ): array {
+	protected function get_item_( \WP_Post $mi, array $as, $title_filter, $content_filter ): array {
 		$as = is_array( $as ) ? $as : array();
 		if ( ! empty( $mi->classes ) ) {
 			$as = array_merge( $as, $mi->classes );
 		}
 		$cls      = implode( ' ', $as );
 		$li_attr  = "id=\"menu-item-{$mi->ID}\"" . ( empty( $cls ) ? '' : " class=\"$cls\"" );
-		$title    = $this->title_filter( $mi->title, $mi );
-		$cont     = $this->content_filter( trim( $mi->post_content ) );
+		$title    = $title_filter( $mi->title, $mi );
+		$cont     = $content_filter( trim( $mi->post_content ) );
 		$cont_div = empty( $cont ) ? '' : "<div class=\"description\">$cont</div>";
 
 		if ( 'post_type_archive' === $mi->type ) {
