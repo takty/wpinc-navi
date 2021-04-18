@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-14
+ * @version 2021-04-18
  */
 
 namespace wpinc\navi;
@@ -76,7 +76,7 @@ function get_the_page_break_navigation( array $args = array() ): string {
 	$ls[] = '</div>';
 	$ls[] = make_adjacent_link_markup( '\wpinc\navi\get_page_break_link', false, $args['next_text'], $numpages, $page );
 
-	$ls  = improve( "\n", $ls ) . "\n";
+	$ls  = implode( "\n", $ls ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }

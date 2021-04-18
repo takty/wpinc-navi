@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-17
+ * @version 2021-04-18
  */
 
 namespace wpinc\navi;
@@ -217,7 +217,7 @@ class Nav_Menu {
 		$p2cs = array();
 		foreach ( $mis as $mi ) {
 			$p = (int) $mi->menu_item_parent;
-			if ( isset( $ret[ $p ] ) ) {
+			if ( isset( $p2cs[ $p ] ) ) {
 				$p2cs[ $p ][] = $mi;
 			} else {
 				$p2cs[ $p ] = array( $mi );
@@ -283,7 +283,8 @@ class Nav_Menu {
 		$has_curs     = array();
 
 		foreach ( $mis as $mi ) {
-			$last_slug = array_pop( explode( '/', untrailingslashit( $mi->url ) ) );
+			$slugs     = explode( '/', untrailingslashit( $mi->url ) );
+			$last_slug = array_pop( $slugs );
 			if (
 				$archive_slug === $last_slug ||
 				( $mi->object === $cur_tx && $mi->object_id === $cur_term_id ) ||
@@ -578,7 +579,7 @@ class Nav_Menu {
 	 *     @type callable 'content_filter' Filter function for contents.
 	 * }
 	 */
-	public function echo_items( array $args ) {
+	public function echo_items( array $args = array() ) {
 		$args += array(
 			'before'         => '<ul class="menu">',
 			'after'          => '</ul>',

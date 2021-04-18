@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-15
+ * @version 2021-04-18
  */
 
 namespace wpinc\navi;
@@ -76,7 +76,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 	$ls[] = make_archive_links_markup( $lis, $args['type'] );
 	$ls[] = '</div>';
 
-	$ls  = improve( "\n", $ls ) . "\n";
+	$ls  = implode( "\n", $ls ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
@@ -122,7 +122,7 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 	$ls[] = make_archive_links_markup( $lis, $args['type'] );
 	$ls[] = '</div>';
 
-	$ls  = improve( "\n", array_filter( $ls ) ) . "\n";
+	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }

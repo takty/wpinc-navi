@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-13
+ * @version 2021-04-18
  */
 
 namespace wpinc\navi;
@@ -34,7 +34,7 @@ function make_navigation_markup( string $links, string $class, string $screen_re
 		'</nav>',
 	);
 	return sprintf(
-		improve( "\n", $temp ) . "\n",
+		implode( "\n", $temp ) . "\n",
 		sanitize_html_class( $class ),
 		esc_attr( $aria_label ),
 		esc_html( $screen_reader_text ),
@@ -92,22 +92,25 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 			}
 		}
 		$temp = array( '<ul class="links%2$s">', '%1$s', '</ul>' );
-		$temp = improve( "\n", $temp ) . "\n";
+		$temp = implode( "\n", $temp ) . "\n";
 		return sprintf( $temp, $lms, $class );
 	} elseif ( 'select' === $type ) {
+		$has_cur = false;
 		foreach ( $items as $item ) {
 			list( 'url' => $url, 'text' => $text, 'current' => $cur, 'count' => $count ) = $item;
 			$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
-
+			if ( $cur ) {
+				$has_cur = true;
+			}
 			$lms .= make_archive_link_markup( $url, $text, $cur, 'option', $before, $after );
 		}
 		$temp = array(
 			'<select class="links%2$s" onchange="%3$s">',
-			'	<option value="#">%4$s</option>',
+			'	<option value="#"' . ( $has_cur ? ' disabled' : '' ) . '>%4$s</option>',
 			'%1$s',
 			'</select>',
 		);
-		$temp = improve( "\n", $temp ) . "\n";
+		$temp = implode( "\n", $temp ) . "\n";
 		$js   = 'document.location.href=this.value;';
 		return sprintf( $temp, $lms, $class, $js, esc_html( $label ) );
 	}
@@ -146,7 +149,7 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 			$html = sprintf( '	%4$s<a class="nav-link" href="%1$s"%3$s>%2$s</a>%5$s', $url, $text, $aria, $before, $after ) . "\n";
 		}
 	}
-	return $html;
+	return apply_filters( 'get_archives_link', $html, $url, $text, $type, $before, $after, $current );
 }
 
 /**
