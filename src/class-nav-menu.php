@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-18
+ * @version 2021-04-20
  */
 
 namespace wpinc\navi;
@@ -252,7 +252,7 @@ class Nav_Menu {
 	 * @return array A pair of an array of menu ancestors and Array of menu item ID to its parent ID.
 	 */
 	protected function get_ancestors_of_current_( array $mis, array $c2p ): array {
-		$post_type     = get_post_type();
+		$post_type     = ( is_archive() || is_single() ) ? get_post_type() : null;
 		$cur_tx        = null;
 		$cur_term_id   = null;
 		$cur_term_urls = array();
