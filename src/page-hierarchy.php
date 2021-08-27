@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-18
+ * @version 2021-08-27
  */
 
 namespace wpinc\navi;
@@ -41,13 +41,13 @@ function the_sibling_page_navigation( array $args = array(), array $query_args =
  * @param array $args {
  *     (Optional) Default navigation arguments.
  *
- *     @type string 'before'                   Content to prepend to the output. Default ''.
- *     @type string 'after'                    Content to append to the output. Default ''.
- *     @type string 'screen_reader_text'       Screen reader text for navigation element. Default 'Child pages navigation'.
- *     @type string 'aria_label'               ARIA label text for the nav element. Default 'Child pages'.
- *     @type string 'class'                    Custom class for the nav element. Default 'child-page-navigation'.
- *     @type string 'type'                     Link format. Can be 'list', 'select', or custom.
- *     @type bool   'hide_page_with_thumbnail' Whether pages with post thumbnails are hidden. Default false.
+ *     @type string 'before'                      Content to prepend to the output. Default ''.
+ *     @type string 'after'                       Content to append to the output. Default ''.
+ *     @type string 'screen_reader_text'          Screen reader text for navigation element. Default 'Child pages navigation'.
+ *     @type string 'aria_label'                  ARIA label text for the nav element. Default 'Child pages'.
+ *     @type string 'class'                       Custom class for the nav element. Default 'child-page-navigation'.
+ *     @type string 'type'                        Link format. Can be 'list', 'select', or custom.
+ *     @type bool   'do_hide_page_with_thumbnail' Whether pages with post thumbnails are hidden. Default false.
  * }
  * @param array $query_args (Optional) Arguments for get_post().
  * @return string Markup for child page links.
@@ -57,16 +57,16 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
-		'before'                   => '',
-		'after'                    => '',
-		'screen_reader_text'       => __( 'Child pages navigation' ),
-		'aria_label'               => __( 'Child pages' ),
-		'class'                    => 'child-page-navigation',
-		'type'                     => 'list',
-		'hide_page_with_thumbnail' => false,
+		'before'                      => '',
+		'after'                       => '',
+		'screen_reader_text'          => __( 'Child pages navigation' ),
+		'aria_label'                  => __( 'Child pages' ),
+		'class'                       => 'child-page-navigation',
+		'type'                        => 'list',
+		'do_hide_page_with_thumbnail' => false,
 	);
 	global $post;
-	$lis = _get_page_link_items( $query_args, $post->ID, $args['hide_page_with_thumbnail'] );
+	$lis = _get_page_link_items( $query_args, $post->ID, $args['do_hide_page_with_thumbnail'] );
 	if ( count( $lis ) === 0 ) {
 		return '';
 	}
@@ -87,13 +87,13 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
  * @param array $args {
  *     (Optional) Default navigation arguments.
  *
- *     @type string 'before'                   Content to prepend to the output. Default ''.
- *     @type string 'after'                    Content to append to the output. Default ''.
- *     @type string 'screen_reader_text'       Screen reader text for navigation element. Default 'Sibling pages navigation'.
- *     @type string 'aria_label'               ARIA label text for the nav element. Default 'Sibling pages'.
- *     @type string 'class'                    Custom class for the nav element. Default 'sibling-page-navigation'.
- *     @type string 'type'                     Link format. Can be 'list', 'select', or custom.
- *     @type bool   'hide_page_with_thumbnail' Whether pages with post thumbnails are hidden. Default false.
+ *     @type string 'before'                      Content to prepend to the output. Default ''.
+ *     @type string 'after'                       Content to append to the output. Default ''.
+ *     @type string 'screen_reader_text'          Screen reader text for navigation element. Default 'Sibling pages navigation'.
+ *     @type string 'aria_label'                  ARIA label text for the nav element. Default 'Sibling pages'.
+ *     @type string 'class'                       Custom class for the nav element. Default 'sibling-page-navigation'.
+ *     @type string 'type'                        Link format. Can be 'list', 'select', or custom.
+ *     @type bool   'do_hide_page_with_thumbnail' Whether pages with post thumbnails are hidden. Default false.
  * }
  * @param array $query_args (Optional) Arguments for get_post().
  * @return string Markup for sibling page links.
@@ -103,16 +103,16 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
-		'before'                   => '',
-		'after'                    => '',
-		'screen_reader_text'       => __( 'Sibling pages navigation' ),
-		'aria_label'               => __( 'Sibling pages' ),
-		'class'                    => 'sibling-page-navigation',
-		'type'                     => 'list',
-		'hide_page_with_thumbnail' => false,
+		'before'                      => '',
+		'after'                       => '',
+		'screen_reader_text'          => __( 'Sibling pages navigation' ),
+		'aria_label'                  => __( 'Sibling pages' ),
+		'class'                       => 'sibling-page-navigation',
+		'type'                        => 'list',
+		'do_hide_page_with_thumbnail' => false,
 	);
 	global $post;
-	$lis = _get_page_link_items( $query_args, $post->post_parent, $args['hide_page_with_thumbnail'] );
+	$lis = _get_page_link_items( $query_args, $post->post_parent, $args['do_hide_page_with_thumbnail'] );
 	if ( count( $lis ) === 0 ) {
 		return '';
 	}
