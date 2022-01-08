@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-15
+ * @version 2022-01-08
  */
 
 namespace wpinc\navi;
@@ -20,7 +20,7 @@ function activate_link_page_break() {
 
 /**
  * Callback function for 'wp_head' action.
-
+ *
  * @access private
  */
 function _cb_wp_head__link_page_break() {
