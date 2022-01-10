@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-20
+ * @version 2022-01-10
  */
 
 namespace wpinc\navi;
@@ -472,9 +472,9 @@ class Nav_Menu {
 	/**
 	 * Retrieves menu ID.
 	 *
-	 * @return int Menu ID.
+	 * @return ?int Menu ID.
 	 */
-	public function get_menu_id(): int {
+	public function get_menu_id(): ?int {
 		return $this->menu_id;
 	}
 
