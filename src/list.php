@@ -4,104 +4,188 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-15
+ * @version 2022-01-13
  */
 
 namespace wpinc\navi;
 
 /**
- * The.
+ * Makes post list of specific post type.
+ *
+ * @param array $args {
+ *     Arguments.
+ *
+ *     @type string       'post_type'          Post type.
+ *     @type callable     'year_date_function' Function that retrieves year and date from a post.
+ *     @type string       'before'             Content to prepend to the output. Default '<ul>'.
+ *     @type string       'after'              Content to append to the output. Default '</ul>'.
+ *     @type string       'template_slug'      The slug name for the generic template. Default ''.
+ *     @type int          'heading_level'      Heading element level. Default 3.
+ *     @type int          'year_heading_level' Year heading element level. Default 4.
+ *     @type string       'year_format'        Format string of year.
+ *     @type string       'taxonomy'           Taxonomy.
+ *     @type string|array 'terms'              Terms.
+ *     @type int          'latest'             Count of latest posts.
+ *     @type bool         'sticky'             Whether to sort sticky items first. Default false.
+ *     @type string       'order'              Order. Default desc.
+ *     @type string       'orderby'            Orderby. Only 'date' and 'menu_order' is available. Default date.
+ *     @type string       'date_after'         Date to retrieve posts after.
+ *     @type string       'date_before'        Date to retrieve posts before.
+ * }
  */
-function get_post_type_list( $args = array() ) {
+function get_post_list( array $args = array() ): string {
 	$args += array(
-		'post_type'             => '',
-		'year_date_function'    => '\wpinc\navi\get_item_year_date_news',
-		'year_format'           => false,
-
-		'taxonomy'              => false,
-		'term'                  => '',
-		'style'                 => '',
-		'heading'               => false,
-		'year-heading'          => false,
-		'latest'                => false,
-		'sticky'                => false,
-		'order'                 => 'desc',
-		'orderby'               => 'date',  // Only 'date' and 'menu_order' is available.
-		'date-after'            => '',
-		'date-before'           => '',
-		'echo-content-on-empty' => false,
+		'post_type'          => '',
+		'year_date_function' => '\wpinc\navi\get_item_year_date_topic',
+		'before'             => '<ul>',
+		'after'              => '</ul>',
+		'template_slug'      => '',
+		'heading_level'      => 3,
+		'year_heading_level' => 4,
+		'year_format'        => _x( 'Y', 'yearly archives date format' ),
+		'taxonomy'           => '',
+		'terms'              => array(),
+		'latest'             => 0,
+		'sticky'             => false,
+		'order'              => 'desc',
+		'orderby'            => 'date',  // Only 'date' and 'menu_order' is available.
+		'date_after'         => '',
+		'date_before'        => '',
 	);
 
 	$args['order'] = strtolower( $args['order'] );
-	if ( ! empty( $args['date-after'] ) ) {
-		$args['date-after'] = preg_replace( '/[^0-9]/', '', $args['date-after'] );
-		$args['date-after'] = str_pad( $args['date-after'], 8, '0' );
+	if ( ! empty( $args['date_after'] ) ) {
+		$args['date_after'] = preg_replace( '/[^0-9]/', '', $args['date_after'] );
+		$args['date_after'] = str_pad( $args['date_after'], 8, '0' );
 	}
-	if ( ! empty( $args['date-before'] ) ) {
-		$args['date-before'] = preg_replace( '/[^0-9]/', '', $args['date-before'] );
-		$args['date-before'] = str_pad( $args['date-before'], 8, '9' );
+	if ( ! empty( $args['date_before'] ) ) {
+		$args['date_before'] = preg_replace( '/[^0-9]/', '', $args['date_before'] );
+		$args['date_before'] = str_pad( $args['date_before'], 8, '9' );
 	}
-	$terms = empty( $args['term'] ) ? false : $args['term'];
-	$items = _get_item_list( $args['post_type'], $args['taxonomy'], $terms, $args['latest'], $args['sticky'], $args['year_date_function'], $args['date-after'], $args['date-before'], $args['orderby'] );
+	if ( ! is_array( $args['terms'] ) ) {
+		$args['terms'] = array_map( 'trim', explode( ',', $terms ) );
+	}
+	$ps = _get_item_list( $args['post_type'], $args['taxonomy'], $args['terms'], $args['latest'], $args['sticky'] );
+	if ( 'menu_order' === $args['orderby'] ) {
+		usort(
+			$ps,
+			function ( $p1, $p2 ) {
+				return (int) $p2->menu_order <=> (int) $p1->menu_order;
+			}
+		);
+	}
+	$items = _make_item_list( $ps, $args['taxonomy'], $args['year_date_function'], $args['date_after'], $args['date_before'] );
 	if ( empty( $items ) ) {
-		if ( false !== $args['echo-content-on-empty'] && ! empty( $content ) ) {
-			return $content;
-		}
 		return '';
+	}
+	foreach ( $items as &$it ) {
+		$it['type'] = $args['post_type'];
 	}
 	if ( 'asc' === $args['order'] ) {
 		$items = array_reverse( $items );
 	}
-	return _echo_list( $args, $items, $args['post_type'], $args['year_format'] );
+	return _make_list( $args, $items );
 }
 
 /**
- * The.
+ * Retrieves posts.
  *
  * @access private
+ *
+ * @param string $post_type    Post type.
+ * @param string $taxonomy     Taxonomy.
+ * @param array  $term_slugs   Term slugs.
+ * @param int    $latest_count Count of latest posts.
+ * @param bool   $sticky       Whether to sort sticky items first.
  */
-function _get_item_list( $post_type, $taxonomy, $term_slug, $latest_count, $sticky, $year_date, $after, $before, $orderby ) {
-	$args = array( 'suppress_filters' => false );
-
-	if ( false !== $latest_count && is_numeric( $latest_count ) ) {
-		$latest_count = (int) $latest_count;
-		if ( $term_slug ) {
-			$args = \wpinc\append_tax_query( $taxonomy, $term_slug, $args );
-		}
-		if ( $sticky ) {
-			$ps = \wpinc\get_custom_sticky_and_latest_posts( $post_type, $latest_count, $args );
-		} else {
-			$ps = \wpinc\get_latest_posts( $post_type, $latest_count, $args );
-		}
-	} else {
-		$args = \wpinc\append_post_type_query( $post_type, -1 );
-		if ( $term_slug ) {
-			$args = \wpinc\append_tax_query( $taxonomy, $term_slug, $args );
-		}
-		$ps = get_posts( $args );
-	}
-	if ( count( $ps ) === 0 ) {
-		return array();
-	}
-	if ( 'menu_order' === $orderby ) {
-		usort(
-			$ps,
-			function ( $p1, $p2 ) {
-				$a = (int) $p1->menu_order;
-				$b = (int) $p2->menu_order;
-				if ( $a === $b ) {
-					return 0;
-				}
-				return $a < $b ? 1 : -1;
-			}
+function _get_item_list( string $post_type, string $taxonomy, array $term_slugs, int $latest_count, bool $sticky ) {
+	$args = array(
+		'post_type'        => $post_type,
+		'suppress_filters' => false,
+	);
+	if ( $taxonomy && $term_slugs ) {
+		$args['tax_query']   = array();  // phpcs:ignore
+		$args['tax_query'][] = array(
+			'taxonomy' => $taxonomy,
+			'field'    => 'slug',
+			'terms'    => $term_slug,
 		);
 	}
+	if ( $latest_count ) {
+		if ( $sticky ) {
+			$args_s                   = $args;
+			$args_s['posts_per_page'] = -1;
+			$args_s['meta_query']     = array();  // phpcs:ignore
+			$args_s['meta_query'][]   = array(
+				'key'   => '_sticky',
+				'value' => '1',
+			);
+			$args['posts_per_page']   = $latest_count;
+
+			return _merge_sticky_and_latest( get_posts( $args_s ), get_posts( $args ), $latest_count );
+		} else {
+			$args['posts_per_page'] = $latest_count;
+			return get_posts( $args );
+		}
+	}
+	$args['posts_per_page'] = -1;
+	return get_posts( $args );
+}
+
+/**
+ * Merges sticky and latest posts.
+ *
+ * @access private
+ *
+ * @param array $sticky Sticky posts.
+ * @param array $latest Latest posts.
+ * @param int   $count  Max count.
+ * @return array Array of posts.
+ */
+function _merge_sticky_and_latest( array $sticky, array $latest, int $count ): array {
+	$sticky_ids = array_map(
+		function ( $p ) {
+			return $p->ID;
+		},
+		$sticky
+	);
+
+	$ret = $sticky;
+	foreach ( $latest as $l ) {
+		if ( -1 !== $count && $count <= count( $ret ) ) {
+			break;
+		}
+		if ( in_array( $l->ID, $sticky_ids, true ) ) {
+			continue;
+		}
+		$ret[] = $l;
+	}
+	return $ret;
+}
+
+/**
+ * Makes post items.
+ *
+ * @access private
+ *
+ * @param array    $ps        Posts.
+ * @param string   $taxonomy  Taxonomy.
+ * @param callable $year_date Function that retrieves year and date from a post.
+ * @param string   $after     Date to retrieve posts after.
+ * @param string   $before    Date to retrieve posts before.
+ */
+function _make_item_list( array $ps, string $taxonomy, callable $year_date, string $after, string $before ) {
 	$items = array();
 	foreach ( $ps as $p ) {
 		$title = esc_html( wp_strip_all_tags( get_the_title( $p->ID ) ) );
-		$cats  = \wpinc\get_the_term_names( $p->ID, $taxonomy );
 		$url   = esc_attr( get_the_permalink( $p->ID ) );
-
+		$cats  = array();
+		$ts    = get_the_terms( $p, $taxonomy );
+		if ( is_array( $ts ) ) {
+			foreach ( $ts as $t ) {
+				$cats[] = $t->name;
+			}
+		}
 		list( $year, $date ) = call_user_func( $year_date, $p->ID );
 
 		if ( $after && $date < $after ) {
@@ -110,102 +194,117 @@ function _get_item_list( $post_type, $taxonomy, $term_slug, $latest_count, $stic
 		if ( $before && $before < $date ) {
 			continue;
 		}
-		$type    = $post_type;
-		$items[] = compact( 'title', 'cats', 'url', 'year', 'date', 'type', 'p' );
+		$items[] = compact( 'title', 'cats', 'url', 'year', 'date', 'p' );
 	}
 	return $items;
 }
 
 /**
- * The.
+ * Makes list markup.
  *
  * @access private
+ *
+ * @param array $args {
+ *     Arguments.
+ *
+ *     @type string 'before'             Content to prepend to the output.
+ *     @type string 'after'              Content to append to the output.
+ *     @type string 'template_slug'      (Optional) The slug name for the generic template.
+ *     @type string 'heading_level'      Heading element level.
+ *     @type int    'year_heading_level' Year heading element level.
+ *     @type string 'year_format'        Format string of year.
+ *     @type string 'taxonomy'           Taxonomy.
+ *     @type array  'terms'              Terms.
+ * }
+ * @param array $items Post items.
  */
-function _echo_list( array $args, array $items, string $post_type, string $year_format = '' ) {
+function _make_list( array $args, array $items ): string {
 	ob_start();
-	if ( false !== $args['heading'] ) {
-		$tag = _get_item_list_heading( $args['heading'] );
-		$t   = get_term_by( 'slug', $args['term'], $args['taxonomy'] );
-		if ( false !== $t ) {
-			echo "<$tag>" . esc_html( \wpinc\get_term_name( $t ) ) . "</$tag>";  // phpcs:ignore
+	if ( $args['heading_level'] ) {
+		$tag = _get_heading_tag_name( (int) $args['heading_level'] );
+		$tns = array();
+		foreach ( $args['terms'] as $slug ) {
+			$t = get_term_by( 'slug', $slug, $args['taxonomy'] );
+			if ( false !== $t ) {
+				$tns[] = $t->name;
+			}
+		}
+		if ( ! empty( $tns ) ) {
+			echo "<$tag>" . esc_html( implode( ', ', $tns ) ) . "</$tag>";  // phpcs:ignore
 		}
 	}
-	if ( $args['year-heading'] ) {
+	if ( $args['year_heading_level'] ) {
 		$ac = array();
 		foreach ( $items as $it ) {
-			$year = $it['year'];
-			if ( false === $year ) {
-				$year = '-';
-			}
+			$year = is_numeric( $it['year'] ) ? $it['year'] : '-';
 			if ( ! isset( $ac[ $year ] ) ) {
 				$ac[ $year ] = array();
 			}
 			$ac[ $year ][] = $it;
 		}
-
-		$sub_tag = _get_item_list_heading( $args['year-heading'] );
-
-		if ( empty( $year_format ) ) {
-			$year_format = _x( 'Y', 'yearly archives date format' );
-		}
+		$sub_tag = _get_heading_tag_name( (int) $args['year_heading_level'] );
 
 		foreach ( $ac as $year => $items ) {
-			if ( false !== $sub_tag ) {
-				$year = $items[0]['year'];
-				if ( false !== $year ) {
-					$date = date_create_from_format( 'Y', $year );
-					echo "<$sub_tag>" . esc_html( date_format( $date, $year_format ) ) . "</$sub_tag>";  // phpcs:ignore
-				}
+			$year = $items[0]['year'];
+			if ( is_numeric( $year ) ) {
+				$date = date_create_from_format( 'Y', $year );
+				echo "<$sub_tag>" . esc_html( date_format( $date, $args['year_format'] ) ) . "</$sub_tag>";  // phpcs:ignore
 			}
-			_echo_item_list( $items, $args['style'], $post_type );
+			echo $args['before'];  // phpcs:ignore
+			_echo_items( $items, $args['template_slug'] );
+			echo $args['after'];  // phpcs:ignore
 		}
 	} else {
-		_echo_item_list( $items, $args['style'], $post_type );
+		echo $args['before'];  // phpcs:ignore
+		_echo_items( $items, $args['template_slug'] );
+		echo $args['after'];  // phpcs:ignore
 	}
 	return ob_get_clean();
 }
 
 /**
- * The.
+ * Makes heading tag name.
  *
  * @access private
+ *
+ * @param int $level Heading level.
+ * @return string Tag name.
  */
-function _get_item_list_heading( string $tag ): string {
-	if ( is_numeric( $tag ) ) {
-		$l = (int) $tag;
-		if ( 3 <= $l && $l <= 6 ) {
-			return "h$l";
-		}
-	}
-	return 'h3';
+function _get_heading_tag_name( int $level ): string {
+	return ( 1 <= $level && $level <= 6 ) ? "h$level" : 'h3';
 }
 
 /**
- * The.
+ * Echos post items.
  *
  * @access private
+ *
+ * @param array  $items         Post items.
+ * @param string $template_slug The slug name for the generic template.
  */
-function _echo_item_list( array $items, string $style = '', string $post_type = '' ) {
-	if ( 'full' === $style ) {
-		$posts = array_map(
+function _echo_items( array $items, string $template_slug ) {
+	global $post;
+	if ( $template_slug ) {
+		$ps = array_map(
 			function ( $it ) {
 				return $it['p'];
 			},
 			$items
 		);
-		?>
-		<ul class="list-item list-item-<?php echo esc_attr( $post_type ); ?> shortcode">
-			<?php \wpinc\the_loop_posts( 'template-parts/item', $post_type, $posts ); ?>
-		</ul>
-		<?php
+		foreach ( $ps as $post ) {  // phpcs:ignore
+			setup_postdata( $post );
+			get_template_part( $template_slug );
+		}
+		wp_reset_postdata();
 	} else {
-		echo '<ul>';
 		foreach ( $items as $it ) {
+			$cls = ( $post && $post->ID === $it['p']->ID ) ? ' class="current"' : '';
 			?>
-			<li><a href="<?php echo esc_url( $it['url'] ); ?>"><?php echo esc_html( $it['title'] ); ?></a></li>
+			<li<?php echo $cls;  // phpcs:ignore ?>>
+				<a href="<?php echo esc_url( $it['url'] ); ?>"><?php echo esc_html( $it['title'] ); ?></a>
+			</li>
 			<?php
 		}
-		echo '</ul>';
 	}
 }
 
@@ -214,23 +313,30 @@ function _echo_item_list( array $items, string $style = '', string $post_type = 
 
 
 /**
- * The.
+ * Retrieves year and date from topic-like post.
  *
  * @access private
+ *
+ * @param int $post_id Post ID.
+ * @return string[] Array of the year and date strings.
  */
-function get_item_year_date_news( $post_id ) {
+function get_item_year_date_topic( int $post_id ): array {
 	$year = (int) get_the_date( 'Y', $post_id );
 	$date = (int) get_the_date( 'Ymd', $post_id );
 	return array( $year, $date );
 }
 
 /**
- * The.
+ * Retrieves year and date from event-like post.
  *
  * @access private
+
+ * @param int    $post_id  Post ID.
+ * @param string $meta_key Meta key.
+ * @return string[] Array of the year and date strings.
  */
-function get_item_year_date_event( $post_id ) {
-	$date = get_post_meta( $post_id, \wpinc\event\PMK_DATE_BGN, true );
+function get_item_year_date_event( int $post_id, string $meta_key ): array {
+	$date = get_post_meta( $post_id, $meta_key, true );
 	$year = (int) explode( '-', $date )[0];
 	$date = (int) str_replace( '-', '', $date );
 	return array( $year, $date );
