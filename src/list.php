@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-13
+ * @version 2022-01-14
  */
 
 namespace wpinc\navi;
@@ -70,7 +70,7 @@ function get_post_list( array $args = array() ): string {
 		usort(
 			$ps,
 			function ( $p1, $p2 ) {
-				return (int) $p2->menu_order <=> (int) $p1->menu_order;
+				return (int) $p1->menu_order <=> (int) $p2->menu_order;
 			}
 		);
 	}
