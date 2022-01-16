@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-14
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -15,22 +15,22 @@ namespace wpinc\navi;
  * @param array $args {
  *     Arguments.
  *
- *     @type string       'post_type'          Post type.
- *     @type callable     'year_date_function' Function that retrieves year and date from a post.
- *     @type string       'before'             Content to prepend to the output. Default '<ul>'.
- *     @type string       'after'              Content to append to the output. Default '</ul>'.
- *     @type string       'template_slug'      The slug name for the generic template. Default ''.
- *     @type int          'heading_level'      Heading element level. Default 3.
- *     @type int          'year_heading_level' Year heading element level. Default 4.
- *     @type string       'year_format'        Format string of year.
- *     @type string       'taxonomy'           Taxonomy.
- *     @type string|array 'terms'              Terms.
- *     @type int          'latest'             Count of latest posts.
- *     @type bool         'sticky'             Whether to sort sticky items first. Default false.
- *     @type string       'order'              Order. Default desc.
- *     @type string       'orderby'            Orderby. Only 'date' and 'menu_order' is available. Default date.
- *     @type string       'date_after'         Date to retrieve posts after.
- *     @type string       'date_before'        Date to retrieve posts before.
+ *     @type string          'post_type'          Post type.
+ *     @type callable        'year_date_function' Function that retrieves year and date from a post.
+ *     @type string          'before'             Content to prepend to the output. Default '<ul>'.
+ *     @type string          'after'              Content to append to the output. Default '</ul>'.
+ *     @type string          'template_slug'      The slug name for the generic template. Default ''.
+ *     @type int             'heading_level'      Heading element level. Default 3.
+ *     @type int             'year_heading_level' Year heading element level. Default 4.
+ *     @type string          'year_format'        Format string of year.
+ *     @type string          'taxonomy'           Taxonomy.
+ *     @type string|string[] 'terms'              Terms.
+ *     @type int             'latest'             Count of latest posts.
+ *     @type bool            'sticky'             Whether to sort sticky items first. Default false.
+ *     @type string          'order'              Order. Default desc.
+ *     @type string          'orderby'            Orderby. Only 'date' and 'menu_order' is available. Default date.
+ *     @type string          'date_after'         Date to retrieve posts after.
+ *     @type string          'date_before'        Date to retrieve posts before.
  * }
  */
 function get_post_list( array $args = array() ): string {
@@ -92,11 +92,11 @@ function get_post_list( array $args = array() ): string {
  *
  * @access private
  *
- * @param string $post_type    Post type.
- * @param string $taxonomy     Taxonomy.
- * @param array  $term_slugs   Term slugs.
- * @param int    $latest_count Count of latest posts.
- * @param bool   $sticky       Whether to sort sticky items first.
+ * @param string   $post_type    Post type.
+ * @param string   $taxonomy     Taxonomy.
+ * @param string[] $term_slugs   Term slugs.
+ * @param int      $latest_count Count of latest posts.
+ * @param bool     $sticky       Whether to sort sticky items first.
  */
 function _get_item_list( string $post_type, string $taxonomy, array $term_slugs, int $latest_count, bool $sticky ) {
 	$args = array(
@@ -173,8 +173,9 @@ function _merge_sticky_and_latest( array $sticky, array $latest, int $count ): a
  * @param callable $year_date Function that retrieves year and date from a post.
  * @param string   $after     Date to retrieve posts after.
  * @param string   $before    Date to retrieve posts before.
+ * @return array Post item.
  */
-function _make_item_list( array $ps, string $taxonomy, callable $year_date, string $after, string $before ) {
+function _make_item_list( array $ps, string $taxonomy, callable $year_date, string $after, string $before ): array {
 	$items = array();
 	foreach ( $ps as $p ) {
 		$title = esc_html( wp_strip_all_tags( get_the_title( $p->ID ) ) );
@@ -282,7 +283,7 @@ function _get_heading_tag_name( int $level ): string {
  * @param array  $items         Post items.
  * @param string $template_slug The slug name for the generic template.
  */
-function _echo_items( array $items, string $template_slug ) {
+function _echo_items( array $items, string $template_slug ): void {
 	global $post;
 	if ( $template_slug ) {
 		$ps = array_map(

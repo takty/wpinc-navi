@@ -14,7 +14,7 @@ namespace wpinc\navi;
  *
  * @param array $args (Optional) See get_the_page_break_navigation() for available arguments.
  */
-function the_page_break_navigation( array $args = array() ) {
+function the_page_break_navigation( array $args = array() ): void {
 	echo get_the_page_break_navigation( $args );  // phpcs:ignore
 }
 

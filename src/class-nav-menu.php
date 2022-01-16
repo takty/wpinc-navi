@@ -43,7 +43,7 @@ class Nav_Menu {
 	/**
 	 * Enable cache of navigation menus.
 	 */
-	public static function enable_cache() {
+	public static function enable_cache(): void {
 		self::$do_cache = true;
 		add_action( 'wp_update_nav_menu', array( '\wpinc\navi\Nav_Menu', 'cb_wp_update_nav_menu_' ), 10, 2 );
 		add_action( 'save_post_page', array( '\wpinc\navi\Nav_Menu', 'cb_save_post_page_' ), 10, 3 );
@@ -55,7 +55,7 @@ class Nav_Menu {
 	 * @param string $post_type Post type.
 	 * @param string $slug      Slug of the archive page.
 	 */
-	public static function add_custom_post_type_archive( string $post_type, string $slug ) {
+	public static function add_custom_post_type_archive( string $post_type, string $slug ): void {
 		self::$custom_post_type_archive[ $post_type ] = $slug;
 	}
 
@@ -408,12 +408,12 @@ class Nav_Menu {
 
 
 	/**
-	 * Callback function for 'wp_update_nav_menu' hook.
+	 * Callback function for 'wp_update_nav_menu' action.
 	 *
 	 * @param int        $menu_id   ID of the updated menu.
 	 * @param array|null $menu_data An array of menu data.
 	 */
-	public static function cb_wp_update_nav_menu_( int $menu_id, ?array $menu_data = null ) {
+	public static function cb_wp_update_nav_menu_( int $menu_id, ?array $menu_data = null ): void {
 		if ( is_array( $menu_data ) && isset( $menu_data['menu-name'] ) ) {
 			$menu = wp_get_nav_menu_object( $menu_data['menu-name'] );
 			if ( isset( $menu->term_id ) ) {
@@ -424,13 +424,13 @@ class Nav_Menu {
 	}
 
 	/**
-	 * Callback function for 'save_post_page' hook.
+	 * Callback function for 'save_post_page' action.
 	 *
 	 * @param int      $post_ID Post ID.
 	 * @param \WP_Post $post    Post object.
 	 * @param bool     $update  Whether this is an existing post being updated.
 	 */
-	public static function cb_save_post_page_( int $post_ID, \WP_Post $post, bool $update ) {
+	public static function cb_save_post_page_( int $post_ID, \WP_Post $post, bool $update ): void {
 		if ( $update ) {
 			foreach ( get_nav_menu_locations() as $loc => $menu_name ) {
 				$menu = wp_get_nav_menu_object( $menu_name );
@@ -579,7 +579,7 @@ class Nav_Menu {
 	 *     @type callable 'content_filter' Filter function for contents.
 	 * }
 	 */
-	public function echo_items( array $args = array() ) {
+	public function echo_items( array $args = array() ): void {
 		$args += array(
 			'before'         => '<ul class="menu">',
 			'after'          => '</ul>',
@@ -603,7 +603,7 @@ class Nav_Menu {
 	 * @param callable $title_filter   Filter function for titles.
 	 * @param callable $content_filter Filter function for contents.
 	 */
-	protected function echo_items_( string $before, string $after, int $parent_id, int $depth, $title_filter, $content_filter ) {
+	protected function echo_items_( string $before, string $after, int $parent_id, int $depth, $title_filter, $content_filter ): void {
 		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
 			return;
 		}

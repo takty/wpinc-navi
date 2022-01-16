@@ -17,7 +17,7 @@ require_once __DIR__ . '/page-break.php';
  *
  * @param array $args (Optional) See get_the_post_navigation() for available arguments.
  */
-function the_post_navigation( array $args = array() ) {
+function the_post_navigation( array $args = array() ): void {
 	echo get_the_post_navigation( $args );  // phpcs:ignore
 }
 
@@ -26,7 +26,7 @@ function the_post_navigation( array $args = array() ) {
  *
  * @param array $args (Optional) See get_the_posts_navigation() for available arguments.
  */
-function the_posts_navigation( array $args = array() ) {
+function the_posts_navigation( array $args = array() ): void {
 	echo get_the_posts_navigation( $args );  // phpcs:ignore
 }
 

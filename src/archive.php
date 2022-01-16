@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-18
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -16,7 +16,7 @@ require_once __DIR__ . '/markup.php';
  *
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
-function the_yearly_archive_select( array $args = array() ) {
+function the_yearly_archive_select( array $args = array() ): void {
 	$js = 'document.location.href=this.value;';
 	$dt = $args['default_text'] ?? __( 'Year' );
 
@@ -34,7 +34,7 @@ function the_yearly_archive_select( array $args = array() ) {
  *
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
-function the_taxonomy_archive_select( array $args = array() ) {
+function the_taxonomy_archive_select( array $args = array() ): void {
 	$js = 'document.location.href=this.value;';
 	$dt = $args['default_text'] ?? __( 'Category' );
 
@@ -55,7 +55,7 @@ function the_taxonomy_archive_select( array $args = array() ) {
  *
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
-function the_date_archives( array $args = array() ) {
+function the_date_archives( array $args = array() ): void {
 	echo get_date_archives( $args );  // phpcs:ignore
 }
 
@@ -215,7 +215,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
  *
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
-function the_taxonomy_archives( array $args = array() ) {
+function the_taxonomy_archives( array $args = array() ): void {
 	echo get_taxonomy_archives( $args );  // phpcs:ignore
 }
 

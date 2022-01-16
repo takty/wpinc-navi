@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-18
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -159,7 +159,7 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
  *
  * @param string $url Added URL.
  */
-function _assign_link_tags( string $url ) {
+function _assign_link_tags( string $url ): void {
 	static $urls = array();
 	if ( class_exists( 'Simply_Static\Plugin' ) && empty( $urls ) ) {
 		add_action(

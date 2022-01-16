@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-13
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -15,7 +15,7 @@ require_once __DIR__ . '/list.php';
 /**
  * Adds page navigation shortcodes.
  */
-function add_page_navigation_shortcode() {
+function add_page_navigation_shortcode(): void {
 	add_shortcode( 'child-page-nav', '\wpinc\navi\_sc_child_page_nav' );
 	add_shortcode( 'sibling-page-nav', '\wpinc\navi\_sc_sibling_page_nav' );
 }
@@ -41,7 +41,7 @@ function _sc_child_page_nav( array $atts ): string {
  * @param array $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_sibling_page_nav( array $atts ) {
+function _sc_sibling_page_nav( array $atts ): string {
 	$atts = shortcode_atts( array( 'style' => '' ), $atts );
 	return \wpinc\navi\get_the_sibling_page_navigation( array( 'class' => $atts['style'] ) );
 }
@@ -57,7 +57,7 @@ function _sc_sibling_page_nav( array $atts ) {
  * @param string $taxonomy  Taxonomy.
  * @param array  $args      Arguments for get_post_list.
  */
-function add_post_list_shortcode( string $post_type, string $taxonomy = '', array $args = array() ) {
+function add_post_list_shortcode( string $post_type, string $taxonomy = '', array $args = array() ): void {
 	$args += array(
 		'post_type' => $post_type,
 		'before'    => '<ul class="list-item list-item-' . $post_type . '" shortcode>',
@@ -83,7 +83,7 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
  * @param string $taxonomy  Taxonomy.
  * @param array  $args      Arguments for get_post_list.
  */
-function _sc_post_list( array $atts, string $content, string $post_type, string $taxonomy, array $args ) {
+function _sc_post_list( array $atts, string $content, string $post_type, string $taxonomy, array $args ): string {
 	$new_atts = array();
 	foreach ( $atts as $key => $val ) {
 		$key              = str_replace( '-', '_', $key );

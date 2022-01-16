@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-08-27
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -17,7 +17,7 @@ require_once __DIR__ . '/markup.php';
  * @param array $args       (Optional) See get_the_child_page_navigation() for available arguments.
  * @param array $query_args (Optional) Arguments for get_post().
  */
-function the_child_page_navigation( array $args = array(), array $query_args = array() ) {
+function the_child_page_navigation( array $args = array(), array $query_args = array() ): void {
 	echo get_the_child_page_navigation( $args, $query_args );  // phpcs:ignore
 }
 
@@ -27,7 +27,7 @@ function the_child_page_navigation( array $args = array(), array $query_args = a
  * @param array $args       (Optional) See get_the_sibling_page_navigation() for available arguments.
  * @param array $query_args (Optional) Arguments for get_post().
  */
-function the_sibling_page_navigation( array $args = array(), array $query_args = array() ) {
+function the_sibling_page_navigation( array $args = array(), array $query_args = array() ): void {
 	echo get_the_sibling_page_navigation( $args, $query_args );  // phpcs:ignore
 }
 
