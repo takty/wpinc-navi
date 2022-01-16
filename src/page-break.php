@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2021-04-18
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -88,8 +88,8 @@ function get_the_page_break_navigation( array $args = array() ): string {
 /**
  * Retrieves page break link url. Based on _wp_link_page().
  *
- * @param int       $idx  Page number.
- * @param ?\WP_Post $post The post.
+ * @param int           $idx  Page number.
+ * @param \WP_Post|null $post The post.
  * @return string Link.
  */
 function get_page_break_link( int $idx, ?\WP_Post $post = null ): string {

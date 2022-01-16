@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-10
+ * @version 2022-01-16
  */
 
 namespace wpinc\navi;
@@ -410,8 +410,8 @@ class Nav_Menu {
 	/**
 	 * Callback function for 'wp_update_nav_menu' hook.
 	 *
-	 * @param int    $menu_id   ID of the updated menu.
-	 * @param ?array $menu_data An array of menu data.
+	 * @param int        $menu_id   ID of the updated menu.
+	 * @param array|null $menu_data An array of menu data.
 	 */
 	public static function cb_wp_update_nav_menu_( int $menu_id, ?array $menu_data = null ) {
 		if ( is_array( $menu_data ) && isset( $menu_data['menu-name'] ) ) {
@@ -472,7 +472,7 @@ class Nav_Menu {
 	/**
 	 * Retrieves menu ID.
 	 *
-	 * @return ?int Menu ID.
+	 * @return int|null Menu ID.
 	 */
 	public function get_menu_id(): ?int {
 		return $this->menu_id;
@@ -511,7 +511,7 @@ class Nav_Menu {
 	 *
 	 * @param int   $parent_id  Parent ID.
 	 * @param array $attributes Attributes.
-	 * @return ?int Item ID.
+	 * @return int|null Item ID.
 	 */
 	public function get_item_id( int $parent_id = 0, array $attributes ): ?int {
 		if ( ! is_page() ) {
