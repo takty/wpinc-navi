@@ -426,11 +426,11 @@ class Nav_Menu {
 	/**
 	 * Callback function for 'save_post_page' hook.
 	 *
-	 * @param int     $post_ID Post ID.
-	 * @param WP_Post $post    Post object.
-	 * @param bool    $update  Whether this is an existing post being updated.
+	 * @param int      $post_ID Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an existing post being updated.
 	 */
-	public static function cb_save_post_page_( int $post_ID, WP_Post $post, bool $update ) {
+	public static function cb_save_post_page_( int $post_ID, \WP_Post $post, bool $update ) {
 		if ( $update ) {
 			foreach ( get_nav_menu_locations() as $loc => $menu_name ) {
 				$menu = wp_get_nav_menu_object( $menu_name );
