@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-01-25
  */
 
 namespace wpinc\navi;
@@ -28,9 +28,13 @@ function add_page_navigation_shortcode(): void {
  * @param array $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_child_page_nav( array $atts ): string {
+function _sc_child_page_nav( $atts ): string {
 	$atts = shortcode_atts( array( 'style' => '' ), $atts );
-	return \wpinc\navi\get_the_child_page_navigation( array( 'class' => $atts['style'] ) );
+	return \wpinc\navi\get_the_child_page_navigation(
+		array(
+			'class' => "child-page-navigation {$atts['style']}",
+		)
+	);
 }
 
 /**
@@ -41,9 +45,13 @@ function _sc_child_page_nav( array $atts ): string {
  * @param array $atts Attributes.
  * @return string Result of the shortcode.
  */
-function _sc_sibling_page_nav( array $atts ): string {
+function _sc_sibling_page_nav( $atts ): string {
 	$atts = shortcode_atts( array( 'style' => '' ), $atts );
-	return \wpinc\navi\get_the_sibling_page_navigation( array( 'class' => $atts['style'] ) );
+	return \wpinc\navi\get_the_sibling_page_navigation(
+		array(
+			'class' => "sibling-page-navigation {$atts['style']}",
+		)
+	);
 }
 
 
@@ -95,7 +103,7 @@ function _sc_post_list( array $atts, string $content, string $post_type, string 
 	);
 
 	$args += shortcode_atts( $defs, $new_atts );
-	$ret   = get_post_type_list( $args );
+	$ret   = get_post_list( $args );
 	if ( empty( $ret ) && false !== $atts['echo_content_on_empty'] && ! empty( $content ) ) {
 		return $content;
 	}
