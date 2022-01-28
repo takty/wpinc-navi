@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-01-29
  */
 
 namespace wpinc\navi;
@@ -82,7 +82,12 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 	$lms = '';
 	if ( 'list' === $type ) {
 		foreach ( $items as $item ) {
-			list( 'url' => $url, 'text' => $text, 'current' => $cur, 'count' => $count, 'dots' => $dots ) = $item;
+			$url   = $item['url'] ?? null;
+			$text  = $item['text'] ?? null;
+			$cur   = $item['current'] ?? null;
+			$count = $item['count'] ?? null;
+			$dots  = $item['dots'] ?? null;
+
 			if ( $dots ) {
 				$lms .= sprintf( '	<li class="dots"><span>%s</span></li>', $text ) . "\n";
 			} else {
@@ -97,7 +102,11 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 	} elseif ( 'select' === $type ) {
 		$has_cur = false;
 		foreach ( $items as $item ) {
-			list( 'url' => $url, 'text' => $text, 'current' => $cur, 'count' => $count ) = $item;
+			$url   = $item['url'] ?? null;
+			$text  = $item['text'] ?? null;
+			$cur   = $item['current'] ?? null;
+			$count = $item['count'] ?? null;
+
 			$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
 			if ( $cur ) {
 				$has_cur = true;
