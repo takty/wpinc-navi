@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-29
+ * @version 2022-02-08
  */
 
 namespace wpinc\navi;
@@ -120,7 +120,11 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 			'</select>',
 		);
 		$temp = implode( "\n", $temp ) . "\n";
-		$js   = 'document.location.href=this.value;';
+		if ( class_exists( 'Simply_Static\Plugin' ) ) {
+			$js = 'document.location.href=document.getElementById(this.value).href;';
+		} else {
+			$js = 'document.location.href=this.value;';
+		}
 		return sprintf( $temp, $lms, $class, $js, esc_html( $label ) );
 	}
 	return '';
@@ -139,6 +143,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
  * @return string HTML content.
  */
 function make_archive_link_markup( string $url, string $text, bool $current = false, string $type = 'html', string $before = '', string $after = '' ): string {
+	$url  = _apply_get_archives_link_filter( $url );
 	$url  = esc_url( $url );
 	$text = wptexturize( $text );
 
@@ -146,8 +151,8 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 		$text = esc_attr( $text );
 		$html = sprintf( '	<link rel="archives" href="%1$s" title="%2$s">', $url, $text ) . "\n";
 	} elseif ( 'option' === $type ) {
-		_assign_link_tags( $url );
 		$cur  = $current ? ' selected="selected"' : '';
+		$url  = _assign_link_tags( $url );
 		$html = sprintf( '	<option value="%1$s"%3$s>%4$s%2$s%5$s</option>', $url, $text, $cur, $before, $after ) . "\n";
 	} else {
 		$aria = $current ? ' aria-current="page"' : '';
@@ -162,27 +167,47 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 }
 
 /**
+ * Retrieves URL to which the 'get_archives_link' filter is applied.
+ *
+ * @access private
+ *
+ * @param string $url URL.
+ * @return string Modified URL.
+ */
+function _apply_get_archives_link_filter( string $url ): string {
+	$output = trim( get_archives_link( $url, '', 'custom' ) );
+	return preg_replace( '/<a href=(["\'])(.*?)\1><\/a>/', '${2}', $output );
+}
+
+/**
  * Assigns link tags.
  *
  * @access private
  *
  * @param string $url Added URL.
+ * @return string URL or ID of the URL.
  */
-function _assign_link_tags( string $url ): void {
+function _assign_link_tags( string $url ): string {
 	static $urls = array();
-	if ( class_exists( 'Simply_Static\Plugin' ) && empty( $urls ) ) {
+	if ( ! class_exists( 'Simply_Static\Plugin' ) ) {
+		return $url;
+	}
+	if ( empty( $urls ) ) {
 		add_action(
 			'wp_footer',
 			function () use ( &$urls ) {
-				echo "<div style=\"display:none;\"><!-- for simply static -->\n";
-				foreach ( $urls as $url ) {
-					echo "\t<link rel=\"archive\" href=\"$url\">\n";  // phpcs:ignore
+				echo "\n<div style=\"display:none;\"><!-- for simply static -->\n";
+				foreach ( $urls as $ui ) {
+					list( $url, $id ) = $ui;
+					echo "\t<link rel=\"archive\" href=\"$url\" id=\"$id\">\n";  // phpcs:ignore
 				}
 				echo "</div>\n";
 			}
 		);
 	}
-	$urls[] = $url;
+	$id     = '#' . hash( 'crc32b', $url );
+	$urls[] = array( $url, $id );
+	return $id;
 }
 
 
