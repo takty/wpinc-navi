@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-02-09
  */
 
 namespace wpinc\navi;
@@ -198,9 +198,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 
 	$ls   = array();
 	$ls[] = make_adjacent_link_markup( $get_link, true, $args['prev_text'], $total, $current );
-	$ls[] = '<div class="nav-items">';
-	$ls[] = make_archive_links_markup( $lis, $args['type'], '', $args['number_before'], $args['number_after'] );
-	$ls[] = '</div>';
+	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['number_before'], $args['number_after'] );
 	$ls[] = make_adjacent_link_markup( $get_link, false, $args['next_text'], $total, $current );
 
 	$ls  = implode( "\n", $ls ) . "\n";

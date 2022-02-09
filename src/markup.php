@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-08
+ * @version 2022-02-09
  */
 
 namespace wpinc\navi;
@@ -77,7 +77,7 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
  * @return string HTML content.
  */
 function make_archive_links_markup( array $items, string $type = 'list', string $class = '', string $before = '', string $after = '', bool $do_show_count = false, string $label = '' ): string {
-	$class = empty( $class ) ? '' : ( ' ' . sanitize_html_class( $class ) );
+	$class = empty( $class ) ? '' : ( sanitize_html_class( $class ) . ' ' );
 
 	$lms = '';
 	if ( 'list' === $type ) {
@@ -96,7 +96,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 				$lms .= make_archive_link_markup( $url, $text, $cur, 'html', $before, $after_mod );
 			}
 		}
-		$temp = array( '<ul class="links%2$s">', '%1$s', '</ul>' );
+		$temp = array( '<ul class="%2$slinks">', '%1$s', '</ul>' );
 		$temp = implode( "\n", $temp ) . "\n";
 		return sprintf( $temp, $lms, $class );
 	} elseif ( 'select' === $type ) {
@@ -114,7 +114,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 			$lms .= make_archive_link_markup( $url, $text, $cur, 'option', $before, $after );
 		}
 		$temp = array(
-			'<select class="links%2$s" onchange="%3$s">',
+			'<select class="%2$slinks" onchange="%3$s">',
 			'	<option value="#"' . ( $has_cur ? ' disabled' : '' ) . '>%4$s</option>',
 			'%1$s',
 			'</select>',
