@@ -151,6 +151,9 @@ function get_the_posts_navigation( array $args = array() ): string {
 	if ( ! isset( $wp_query->max_num_pages ) || $wp_query->max_num_pages < 2 ) {
 		return '';
 	}
+	if ( $wp_query->is_search() && empty( get_search_query() ) ) {
+		return '';
+	}
 	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
