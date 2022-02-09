@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-02-09
  */
 
 namespace wpinc\navi;
@@ -72,9 +72,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 	}
 	$ls   = array();
 	$ls[] = '<div class="nav-parent current"><span>' . esc_html( get_the_title() ) . '</span></div>';
-	$ls[] = '<div class="nav-items">';
-	$ls[] = make_archive_links_markup( $lis, $args['type'] );
-	$ls[] = '</div>';
+	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items' );
 
 	$ls  = implode( "\n", $ls ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
@@ -118,9 +116,7 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 	}
 	$ls   = array();
 	$ls[] = _make_parent_page_link_markup();
-	$ls[] = '<div class="nav-items">';
-	$ls[] = make_archive_links_markup( $lis, $args['type'] );
-	$ls[] = '</div>';
+	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items' );
 
 	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
