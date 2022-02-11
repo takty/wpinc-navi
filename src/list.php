@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-02-12
  */
 
 namespace wpinc\navi;
@@ -122,7 +122,7 @@ function _get_item_list( string $post_type, string $taxonomy, array $term_slugs,
 			);
 			$args['posts_per_page']   = $latest_count;
 
-			return _merge_sticky_and_latest( get_posts( $args_s ), get_posts( $args ), $latest_count );
+			return _add_posts( get_posts( $args_s ), get_posts( $args ), $latest_count );
 		} else {
 			$args['posts_per_page'] = $latest_count;
 			return get_posts( $args );
@@ -133,32 +133,22 @@ function _get_item_list( string $post_type, string $taxonomy, array $term_slugs,
 }
 
 /**
- * Merges sticky and latest posts.
+ * Adds post objects.
  *
  * @access private
  *
- * @param array $sticky Sticky posts.
- * @param array $latest Latest posts.
- * @param int   $count  Max count.
- * @return array Array of posts.
+ * @param \WP_Post[] $augend Array of post objects to which others are added.
+ * @param \WP_Post[] $addend Array of post objects which are added to others.
+ * @param int|null   $count  Counts of total number.
+ * @return \WP_Post[] Array of post objects.
  */
-function _merge_sticky_and_latest( array $sticky, array $latest, int $count ): array {
-	$sticky_ids = array_map(
-		function ( $p ) {
-			return $p->ID;
-		},
-		$sticky
-	);
+function _add_posts( array $augend, array $addend, ?int $count = null ): array {
+	$augend_ips = array_column( $augend, null, 'ID' );
+	$addend_ips = array_column( $addend, null, 'ID' );
 
-	$ret = $sticky;
-	foreach ( $latest as $l ) {
-		if ( -1 !== $count && $count <= count( $ret ) ) {
-			break;
-		}
-		if ( in_array( $l->ID, $sticky_ids, true ) ) {
-			continue;
-		}
-		$ret[] = $l;
+	$ret = array_values( $augend_ips + $addend_ips );
+	if ( 0 < $count ) {
+		array_splice( $ret, $count );
 	}
 	return $ret;
 }
@@ -286,12 +276,7 @@ function _get_heading_tag_name( int $level ): string {
 function _echo_items( array $items, string $template_slug ): void {
 	global $post;
 	if ( $template_slug ) {
-		$ps = array_map(
-			function ( $it ) {
-				return $it['p'];
-			},
-			$items
-		);
+		$ps = array_column( $items, 'p' );
 		foreach ( $ps as $post ) {  // phpcs:ignore
 			setup_postdata( $post );
 			get_template_part( $template_slug );

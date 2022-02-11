@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-02-11
  */
 
 namespace wpinc\navi;
@@ -498,12 +498,7 @@ class Nav_Menu {
 		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
 			return array();
 		}
-		return array_map(
-			function ( $e ) {
-				return $e->ID;
-			},
-			$this->p_to_cs[ $parent_id ]
-		);
+		return array_column( $this->p_to_cs[ $parent_id ], 'ID' );
 	}
 
 	/**
