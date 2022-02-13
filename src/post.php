@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-09
+ * @version 2022-02-13
  */
 
 namespace wpinc\navi;
@@ -139,8 +139,10 @@ function _get_adjacent_post_link( string $text, bool $previous, $in_same_term, $
  *     @type string 'type'               Link format. Can be 'list', 'select', or custom.
  *     @type string 'mid_size'           How many numbers to either side of the current pages. Default 2.
  *     @type string 'end_size'           How many numbers on either the start and the end list edges. Default 1.
- *     @type string 'number_before'      A string to appear before the page number.
- *     @type string 'number_after'       A string to append after the page number.
+ *     @type string 'number_before'      Content to prepend to each page number. Default ''.
+ *     @type string 'number_after'       Content to append to each page number. Default ''.
+ *     @type string 'numbers_before'     Content to prepend to the page numbers. Default ''.
+ *     @type string 'numbers_after'      Content to append to the page numbers. Default ''.
  *     @type string 'add_args'           An array of query args to add.
  *     @type string 'add_fragment'       A string to append to each link.
  * }
@@ -171,6 +173,8 @@ function get_the_posts_navigation( array $args = array() ): string {
 		'end_size'           => 1,
 		'number_before'      => '',
 		'number_after'       => '',
+		'numbers_before'     => '',
+		'numbers_after'      => '',
 		'add_args'           => array(), // Array of query args to add.
 		'add_fragment'       => '',
 	);
@@ -197,14 +201,16 @@ function get_the_posts_navigation( array $args = array() ): string {
 	}
 	$get_link = _get_paging_link_function( $format, $base, $args['add_args'], $args['add_fragment'] );
 
-	$lis = get_archive_link_items( $get_link, $total, $current, (int) $args['mid_size'], (int) $args['end_size'] );
+	$lis = get_archive_link_items( $get_link, $total, $current, (int) $args['mid_size'], (int) $args['end_size'], 'select' === $args['type'] );
 
 	$ls   = array();
 	$ls[] = make_adjacent_link_markup( $get_link, true, $args['prev_text'], $total, $current );
+	$ls[] = $args['numbers_before'];
 	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['number_before'], $args['number_after'] );
+	$ls[] = $args['numbers_after'];
 	$ls[] = make_adjacent_link_markup( $get_link, false, $args['next_text'], $total, $current );
 
-	$ls  = implode( "\n", $ls ) . "\n";
+	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }

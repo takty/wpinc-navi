@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-09
+ * @version 2022-02-13
  */
 
 namespace wpinc\navi;
@@ -82,17 +82,16 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 	$lms = '';
 	if ( 'list' === $type ) {
 		foreach ( $items as $item ) {
-			$url   = $item['url'] ?? null;
-			$text  = $item['text'] ?? null;
-			$cur   = $item['current'] ?? null;
-			$count = $item['count'] ?? null;
-			$dots  = $item['dots'] ?? null;
+			$text = $item['text'] ?? '';
 
-			if ( $dots ) {
+			if ( $item['dots'] ?? false ) {
 				$lms .= sprintf( '	<li class="dots"><span>%s</span></li>', $text ) . "\n";
 			} else {
+				$count     = $item['count'] ?? null;
 				$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
 
+				$url  = $item['url'] ?? '';
+				$cur  = $item['current'] ?? false;
 				$lms .= make_archive_link_markup( $url, $text, $cur, 'html', $before, $after_mod );
 			}
 		}
@@ -102,23 +101,25 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 	} elseif ( 'select' === $type ) {
 		$has_cur = false;
 		foreach ( $items as $item ) {
-			$url   = $item['url'] ?? null;
-			$text  = $item['text'] ?? null;
-			$cur   = $item['current'] ?? null;
-			$count = $item['count'] ?? null;
+			$text = $item['text'] ?? '';
 
-			$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
-			if ( $cur ) {
-				$has_cur = true;
+			if ( $item['dots'] ?? false ) {
+				$lms .= sprintf( '	<option class="dots" disabled>%s</option>', $text ) . "\n";
+			} else {
+				$count     = $item['count'] ?? null;
+				$after_mod = ( $do_show_count && isset( $count ) ) ? "<span class=\"count\">($count)</span>$after" : $after;
+
+				$url  = $item['url'] ?? '';
+				$cur  = $item['current'] ?? false;
+				$lms .= make_archive_link_markup( $url, $text, $cur, 'option', $before, $after_mod );
+				if ( $cur ) {
+					$has_cur = true;
+				}
 			}
-			$lms .= make_archive_link_markup( $url, $text, $cur, 'option', $before, $after );
 		}
-		$temp = array(
-			'<select class="%2$slinks" onchange="%3$s">',
-			'	<option value="#"' . ( $has_cur ? ' disabled' : '' ) . '>%4$s</option>',
-			'%1$s',
-			'</select>',
-		);
+		$default = empty( $label ) ? '' : '	<option value="#"' . ( $has_cur ? ' disabled' : '' ) . '>%4$s</option>' . "\n";
+
+		$temp = array( '<select class="%2$slinks" onchange="%3$s">', $default . '%1$s', '</select>' );
 		$temp = implode( "\n", $temp ) . "\n";
 		if ( class_exists( 'Simply_Static\Plugin' ) ) {
 			$js = 'document.location.href=document.getElementById(this.value).href;';
@@ -217,16 +218,19 @@ function _assign_link_tags( string $url ): string {
 /**
  * Retrieves archive link items.
  *
- * @param callable $get_link The function that retrieves archive page URLs.
- * @param int      $total    Total pages.
- * @param int      $current  Current page.
- * @param int      $mid_size How many numbers to either side of the current pages.
- * @param int      $end_size How many numbers on either the start and the end list edges.
+ * @param callable $get_link        The function that retrieves archive page URLs.
+ * @param int      $total           Total pages.
+ * @param int      $current         Current page.
+ * @param int      $mid_size        How many numbers to either side of the current pages.
+ * @param int      $end_size        How many numbers on either the start and the end list edges.
+ * @param bool     $do_append_total Whether to append total pages to the current item text.
  * @return array Link items.
  */
-function get_archive_link_items( $get_link, int $total, int $current, int $mid_size, int $end_size ): array {
+function get_archive_link_items( $get_link, int $total, int $current, int $mid_size, int $end_size, bool $do_append_total ): array {
 	$end_size = ( $end_size < 1 ) ? 1 : $end_size;
 	$mid_size = ( $mid_size < 0 ) ? 2 : $mid_size;
+
+	$per_total = $do_append_total ? ( ' / ' . number_format_i18n( $total ) ) : '';
 
 	$dots = false;
 	$lis  = array();
@@ -241,7 +245,7 @@ function get_archive_link_items( $get_link, int $total, int $current, int $mid_s
 			$dots  = true;
 			$lis[] = array(
 				'url'     => call_user_func( $get_link, $n ),
-				'text'    => number_format_i18n( $n ),
+				'text'    => number_format_i18n( $n ) . ( $n === $current ? $per_total : '' ),
 				'current' => $n === $current,
 			);
 		} elseif ( $dots ) {
