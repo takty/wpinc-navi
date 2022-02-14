@@ -4,7 +4,7 @@
  *
  * @package Sample
  * @author Takuto Yanagida
- * @version 2022-01-25
+ * @version 2022-02-14
  */
 
 namespace sample;
@@ -108,8 +108,8 @@ function the_date_archives( array $args = array() ) {
  *     @type string     'before'        Content to prepend to the output. Default ''.
  *     @type string     'after'         Content to append to the output. Default ''.
  *     @type string     'type'          Can be 'link', 'option', 'html', or custom. Default value: 'html'
- *     @type string     'item_before'   Content to prepend to each link. Default value: ''
- *     @type string     'item_after'    Content to append to each link. Default value: ''
+ *     @type string     'link_before'   Content to prepend to each link. Default value: ''
+ *     @type string     'link_after'    Content to append to each link. Default value: ''
  *     @type bool       'do_show_count' Whether to display the post count alongside the link. Default false.
  *     @type string     'default_text'  Default text used when 'type' is 'select'. Default ''.
  *     @type string     'post_type'     Post type. Default 'post'.
@@ -142,8 +142,8 @@ function the_taxonomy_archives( array $args = array() ) {
  *     @type string     'before'        Content to prepend to the output. Default ''.
  *     @type string     'after'         Content to append to the output. Default ''.
  *     @type string     'type'          Link format. Can be 'list', or 'select'.
- *     @type string     'item_before'   Content to prepend to each link. Default value: ''
- *     @type string     'item_after'    Content to append to each link. Default value: ''
+ *     @type string     'link_before'   Content to prepend to each link. Default value: ''
+ *     @type string     'link_after'    Content to append to each link. Default value: ''
  *     @type bool       'do_show_count' Whether to display the post count alongside the link. Default false.
  *     @type string     'default_text'  Default text used when 'type' is 'select'. Default ''.
  *     @type string     'post_type'     Post type. Default 'post'.
@@ -188,8 +188,8 @@ function the_page_break_navigation( array $args = array() ) {
  *     @type string 'type'               Link format. Can be 'list', 'select', or custom.
  *     @type string 'mid_size'           How many numbers to either side of the current pages. Default 2.
  *     @type string 'end_size'           How many numbers on either the start and the end list edges. Default 1.
- *     @type string 'number_before'      A string to appear before the page number.
- *     @type string 'number_after'       A string to append after the page number.
+ *     @type string 'link_before'      A string to appear before the page number.
+ *     @type string 'link_after'       A string to append after the page number.
  * }
  * @return string Markup for page break links.
  */
@@ -327,8 +327,8 @@ function get_the_post_navigation( array $args = array() ): string {
  *     @type string 'type'               Link format. Can be 'list', 'select', or custom.
  *     @type string 'mid_size'           How many numbers to either side of the current pages. Default 2.
  *     @type string 'end_size'           How many numbers on either the start and the end list edges. Default 1.
- *     @type string 'number_before'      A string to appear before the page number.
- *     @type string 'number_after'       A string to append after the page number.
+ *     @type string 'link_before'        A string to appear before the page number.
+ *     @type string 'link_after'         A string to append after the page number.
  *     @type string 'add_args'           An array of query args to add.
  *     @type string 'add_fragment'       A string to append to each link.
  * }

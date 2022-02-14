@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-16
+ * @version 2022-02-14
  */
 
 namespace wpinc\navi;
@@ -68,8 +68,8 @@ function the_date_archives( array $args = array() ): void {
  *     @type string     'before'        Content to prepend to the output. Default ''.
  *     @type string     'after'         Content to append to the output. Default ''.
  *     @type string     'type'          Link format. Can be 'list' or 'select'. Default 'list'.
- *     @type string     'item_before'   Content to prepend to each link. Default value: ''
- *     @type string     'item_after'    Content to append to each link. Default value: ''
+ *     @type string     'link_before'   Content to prepend to each link. Default value: ''
+ *     @type string     'link_after'    Content to append to each link. Default value: ''
  *     @type bool       'do_show_count' Whether to display the post count alongside the link. Default false.
  *     @type string     'default_text'  Default text used when 'type' is 'select'. Default ''.
  *     @type string     'post_type'     Post type. Default 'post'.
@@ -87,8 +87,8 @@ function get_date_archives( array $args = array() ): string {
 		'after'         => '',
 		'type'          => 'list',
 
-		'item_before'   => '',
-		'item_after'    => '',
+		'link_before'   => '',
+		'link_after'    => '',
 		'do_show_count' => false,
 		'default_text'  => '',
 		'post_type'     => 'post',
@@ -103,7 +103,7 @@ function get_date_archives( array $args = array() ): string {
 	if ( empty( $lis ) ) {
 		return '';
 	}
-	$ls = make_archive_links_markup( $lis, $args['type'], '', $args['item_before'], $args['item_after'], $args['do_show_count'], $args['default_text'] );
+	$ls = make_archive_links_markup( $lis, $args['type'], '', $args['link_before'], $args['link_after'], $args['do_show_count'], $args['default_text'] );
 	return $args['before'] . $ls . $args['after'];
 }
 
@@ -228,8 +228,8 @@ function the_taxonomy_archives( array $args = array() ): void {
  *     @type string     'before'        Content to prepend to the output. Default ''.
  *     @type string     'after'         Content to append to the output. Default ''.
  *     @type string     'type'          Link format. Can be 'list' or 'select'. Default 'list'.
- *     @type string     'item_before'   Content to prepend to each link. Default value: ''
- *     @type string     'item_after'    Content to append to each link. Default value: ''
+ *     @type string     'link_before'   Content to prepend to each link. Default value: ''
+ *     @type string     'link_after'    Content to append to each link. Default value: ''
  *     @type bool       'do_show_count' Whether to display the post count alongside the link. Default false.
  *     @type string     'default_text'  Default text used when 'type' is 'select'. Default ''.
  *     @type string     'post_type'     Post type. Default ''.
@@ -247,8 +247,8 @@ function get_taxonomy_archives( array $args = array() ): string {
 		'after'         => '',
 		'type'          => 'list',
 
-		'item_before'   => '',
-		'item_after'    => '',
+		'link_before'   => '',
+		'link_after'    => '',
 		'do_show_count' => false,
 		'default_text'  => '',
 		'post_type'     => '',
@@ -261,7 +261,7 @@ function get_taxonomy_archives( array $args = array() ): string {
 	);
 
 	$gt_args = $args;
-	foreach ( array( 'before', 'after', 'type', 'item_before', 'item_after', 'do_show_count', 'post_type' ) as $key ) {
+	foreach ( array( 'before', 'after', 'type', 'link_before', 'link_after', 'do_show_count', 'post_type' ) as $key ) {
 		unset( $gt_args[ $key ] );
 	}
 
@@ -270,7 +270,7 @@ function get_taxonomy_archives( array $args = array() ): string {
 	if ( empty( $lis ) ) {
 		return '';
 	}
-	$ls = make_archive_links_markup( $lis, $args['type'], '', $args['item_before'], $args['item_after'], $args['do_show_count'], $args['default_text'] );
+	$ls = make_archive_links_markup( $lis, $args['type'], '', $args['link_before'], $args['link_after'], $args['do_show_count'], $args['default_text'] );
 	return $args['before'] . $ls . $args['after'];
 }
 

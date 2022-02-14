@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-13
+ * @version 2022-02-14
  */
 
 namespace wpinc\navi;
@@ -47,10 +47,10 @@ function the_sibling_page_navigation( array $args = array(), array $query_args =
  *     @type string        'aria_label'         ARIA label text for the nav element. Default 'Child pages'.
  *     @type string        'class'              Custom class for the nav element. Default 'child-page-navigation'.
  *     @type string        'type'               Link format. Can be 'list', 'select', or custom.
- *     @type string        'item_before'        Content to prepend to each link. Default value: ''
- *     @type string        'item_after'         Content to append to each link. Default value: ''
- *     @type string        'items_before'       Content to prepend to links. Default value: ''
- *     @type string        'items_after'        Content to append to links. Default value: ''
+ *     @type string        'link_before'        Content to prepend to each link. Default value: ''
+ *     @type string        'link_after'         Content to append to each link. Default value: ''
+ *     @type string        'links_before'       Content to prepend to links. Default value: ''
+ *     @type string        'links_after'        Content to append to links. Default value: ''
  *     @type callable|null 'filter'             Callback function for filtering. Default null.
  * }
  * @param array $query_args (Optional) Arguments for get_post().
@@ -68,10 +68,10 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 		'class'              => 'child-page-navigation',
 		'type'               => 'list',
 
-		'item_before'        => '',
-		'item_after'         => '',
-		'items_before'       => '',
-		'items_after'        => '',
+		'link_before'        => '',
+		'link_after'         => '',
+		'links_before'       => '',
+		'links_after'        => '',
 		'filter'             => null,
 	);
 	global $post;
@@ -81,9 +81,9 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 	}
 	$ls   = array();
 	$ls[] = '<div class="nav-parent current"><span>' . esc_html( get_the_title() ) . '</span></div>';
-	$ls[] = $args['items_before'];
-	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['item_before'], $args['item_after'] );
-	$ls[] = $args['items_after'];
+	$ls[] = $args['links_before'];
+	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['link_before'], $args['link_after'] );
+	$ls[] = $args['links_after'];
 
 	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
@@ -102,10 +102,10 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
  *     @type string        'aria_label'         ARIA label text for the nav element. Default 'Sibling pages'.
  *     @type string        'class'              Custom class for the nav element. Default 'sibling-page-navigation'.
  *     @type string        'type'               Link format. Can be 'list', 'select', or custom.
- *     @type string        'item_before'        Content to prepend to each link. Default value: ''
- *     @type string        'item_after'         Content to append to each link. Default value: ''
- *     @type string        'items_before'       Content to prepend to links. Default value: ''
- *     @type string        'items_after'        Content to append to links. Default value: ''
+ *     @type string        'link_before'        Content to prepend to each link. Default value: ''
+ *     @type string        'link_after'         Content to append to each link. Default value: ''
+ *     @type string        'links_before'       Content to prepend to links. Default value: ''
+ *     @type string        'links_after'        Content to append to links. Default value: ''
  *     @type callable|null 'filter'             Callback function for filtering. Default null.
  * }
  * @param array $query_args (Optional) Arguments for get_post().
@@ -123,10 +123,10 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 		'class'              => 'sibling-page-navigation',
 		'type'               => 'list',
 
-		'item_before'        => '',
-		'item_after'         => '',
-		'items_before'       => '',
-		'items_after'        => '',
+		'link_before'        => '',
+		'link_after'         => '',
+		'links_before'       => '',
+		'links_after'        => '',
 		'filter'             => null,
 	);
 	global $post;
@@ -136,9 +136,9 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 	}
 	$ls   = array();
 	$ls[] = _make_parent_page_link_markup();
-	$ls[] = $args['items_before'];
-	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['item_before'], $args['item_after'] );
-	$ls[] = $args['items_after'];
+	$ls[] = $args['links_before'];
+	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['link_before'], $args['link_after'] );
+	$ls[] = $args['links_after'];
 
 	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
 	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );

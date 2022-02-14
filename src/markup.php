@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-13
+ * @version 2022-02-14
  */
 
 namespace wpinc\navi;
@@ -138,33 +138,32 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
  * @param string $url     URL to archive.
  * @param string $text    Archive text description.
  * @param bool   $current True if the current page is the selected archive.
- * @param string $type    Link format. Can be 'link', 'option', 'html', or custom.
+ * @param string $format  Link format. Can be 'link', 'option', 'html', or custom.
  * @param string $before  Content to prepend to the description.
  * @param string $after   Content to append to the description.
  * @return string HTML content.
  */
-function make_archive_link_markup( string $url, string $text, bool $current = false, string $type = 'html', string $before = '', string $after = '' ): string {
-	$url  = _apply_get_archives_link_filter( $url );
-	$url  = esc_url( $url );
+function make_archive_link_markup( string $url, string $text, bool $current = false, string $format = 'html', string $before = '', string $after = '' ): string {
 	$text = wptexturize( $text );
+	$url  = esc_url( _apply_get_archives_link_filter( $url ) );
 
-	if ( 'link' === $type ) {
+	if ( 'link' === $format ) {
 		$text = esc_attr( $text );
 		$html = sprintf( '	<link rel="archives" href="%1$s" title="%2$s">', $url, $text ) . "\n";
-	} elseif ( 'option' === $type ) {
-		$cur  = $current ? ' selected="selected"' : '';
+	} elseif ( 'option' === $format ) {
+		$attr = $current ? ' selected="selected"' : '';
 		$url  = _assign_link_tags( $url );
-		$html = sprintf( '	<option value="%1$s"%3$s>%4$s%2$s%5$s</option>', $url, $text, $cur, $before, $after ) . "\n";
+		$html = sprintf( '	<option value="%1$s"%3$s>%4$s%2$s%5$s</option>', $url, $text, $attr, $before, $after ) . "\n";
 	} else {
 		$aria = $current ? ' aria-current="page"' : '';
-		if ( 'html' === $type ) {
-			$cls  = $current ? ' class="current"' : '';
-			$html = sprintf( '	<li%3$s>%5$s<a class="nav-link" href="%1$s"%4$s>%2$s</a>%6$s</li>', $url, $text, $cls, $aria, $before, $after ) . "\n";
+		if ( 'html' === $format ) {
+			$attr = $current ? ' class="current"' : '';
+			$html = sprintf( '	<li%3$s>%5$s<a class="nav-link" href="%1$s"%4$s>%2$s</a>%6$s</li>', $url, $text, $attr, $aria, $before, $after ) . "\n";
 		} else {
 			$html = sprintf( '	%4$s<a class="nav-link" href="%1$s"%3$s>%2$s</a>%5$s', $url, $text, $aria, $before, $after ) . "\n";
 		}
 	}
-	return apply_filters( 'get_archives_link', $html, $url, $text, $type, $before, $after, $current );
+	return apply_filters( 'get_archives_link', $html, $url, $text, $format, $before, $after, $current );
 }
 
 /**
