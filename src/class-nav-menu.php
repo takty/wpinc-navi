@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-11
+ * @version 2022-04-15
  */
 
 namespace wpinc\navi;
@@ -39,6 +39,13 @@ class Nav_Menu {
 	 * @var 1.0
 	 */
 	protected static $custom_post_type_archive = array();
+
+	/**
+	 * An array of used ids of menu items.
+	 *
+	 * @var 1.0
+	 */
+	protected static $used_ids = array();
 
 	/**
 	 * Enable cache of navigation menus.
@@ -631,12 +638,20 @@ class Nav_Menu {
 	 * @return array Array of markup.
 	 */
 	protected function get_item_( \WP_Post $mi, array $as, $title_filter, $content_filter ): array {
-		$as = is_array( $as ) ? $as : array();
+		$as   = is_array( $as ) ? $as : array();
+		$as[] = "menu-item-{$mi->ID}";
 		if ( ! empty( $mi->classes ) ) {
 			$as = array_merge( $as, $mi->classes );
 		}
-		$cls      = implode( ' ', $as );
-		$li_attr  = "id=\"menu-item-{$mi->ID}\"" . ( empty( $cls ) ? '' : " class=\"$cls\"" );
+		$cls = implode( ' ', $as );
+
+		$id_at = '';
+		if ( ! in_array( $mi->ID, self::$used_ids, true ) ) {
+			$id_at            = " id=\"menu-item-{$mi->ID}\"";
+			self::$used_ids[] = $mi->ID;
+		}
+
+		$li_at    = $id_at . ( empty( $cls ) ? '' : " class=\"$cls\"" );
 		$title    = $title_filter( $mi->title, $mi );
 		$cont     = $content_filter( trim( $mi->post_content ) );
 		$cont_div = empty( $cont ) ? '' : "<div class=\"description\">$cont</div>";
@@ -650,9 +665,9 @@ class Nav_Menu {
 		}
 
 		if ( in_array( self::CLS_SEPARATOR, $as, true ) ) {
-			$before = "<li $li_attr><div></div>";
+			$before = "<li$li_at><div></div>";
 		} elseif ( in_array( self::CLS_GROUP, $as, true ) ) {
-			$before = "<li $li_attr><label for=\"panel-{$mi->ID}-ctrl\">$title$cont_div</label>";
+			$before = "<li$li_at><label for=\"panel-{$mi->ID}-ctrl\">$title$cont_div</label>";
 		} else {
 			$obj_id = (int) $mi->object_id;
 			if ( in_array( $obj_id, $this->anchored_page_ids, true ) ) {
@@ -661,7 +676,7 @@ class Nav_Menu {
 				$href = esc_url( $mi->url );
 			}
 			$target = esc_attr( $mi->target );
-			$before = "<li $li_attr><a href=\"$href\" target=\"$target\">$title$cont_div</a>";
+			$before = "<li$li_at><a href=\"$href\" target=\"$target\">$title$cont_div</a>";
 		}
 		$after = "</li>\n";
 		return compact( 'before', 'after' );
