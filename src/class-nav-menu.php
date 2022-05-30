@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-04-15
+ * @version 2022-05-30
  */
 
 namespace wpinc\navi;
@@ -459,7 +459,7 @@ class Nav_Menu {
 		if ( self::$do_cache ) {
 			$key   = 'cache-menu-id-' . $id;
 			$items = get_transient( $key );
-			if ( false !== $items ) {
+			if ( is_array( $items ) ) {
 				return $items;
 			}
 			$items = wp_get_nav_menu_items( $id );
