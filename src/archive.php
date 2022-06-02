@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-14
+ * @version 2022-06-02
  */
 
 namespace wpinc\navi;
@@ -259,6 +259,9 @@ function get_taxonomy_archives( array $args = array() ): string {
 		'hierarchical'  => false,
 		'parent'        => 0,
 	);
+	if ( ! taxonomy_exists( $args['taxonomy'] ) ) {
+		return '';
+	}
 
 	$gt_args = $args;
 	foreach ( array( 'before', 'after', 'type', 'link_before', 'link_after', 'do_show_count', 'post_type' ) as $key ) {
