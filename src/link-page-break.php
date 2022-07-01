@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-26
+ * @version 2022-07-01
  */
 
 namespace wpinc\navi;
@@ -27,7 +27,10 @@ function _cb_wp_head__link_page_break(): void {
 	if ( ! is_singular() || is_attachment() ) {
 		return;
 	}
-	$post     = get_post();
+	$post = get_post();
+	if ( ! $post ) {
+		return;
+	}
 	$page_num = _get_page_break_count( $post );
 
 	if ( 0 < $page_num ) {
