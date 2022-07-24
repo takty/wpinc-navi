@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-01-25
+ * @version 2022-07-24
  */
 
 namespace wpinc\navi;
@@ -25,7 +25,7 @@ function add_page_navigation_shortcode(): void {
  *
  * @access private
  *
- * @param array $atts Attributes.
+ * @param array|string $atts Attributes.
  * @return string Result of the shortcode.
  */
 function _sc_child_page_nav( $atts ): string {
@@ -42,7 +42,7 @@ function _sc_child_page_nav( $atts ): string {
  *
  * @access private
  *
- * @param array $atts Attributes.
+ * @param array|string $atts Attributes.
  * @return string Result of the shortcode.
  */
 function _sc_sibling_page_nav( $atts ): string {
@@ -74,7 +74,7 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
 	);
 	add_shortcode(
 		$post_type . '-list',
-		function ( array $atts, string $content ) use ( $post_type, $taxonomy, $args ) {
+		function ( $atts, string $content ) use ( $post_type, $taxonomy, $args ) {
 			return _sc_post_list( $atts, $content, $post_type, $taxonomy, $args );
 		}
 	);
@@ -85,19 +85,20 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
  *
  * @access private
  *
- * @param array  $atts      Attributes.
- * @param string $content   The shortcode content.
- * @param string $post_type Post type.
- * @param string $taxonomy  Taxonomy.
- * @param array  $args      Arguments for get_post_list.
+ * @param array|string $atts      Attributes.
+ * @param string       $content   The shortcode content.
+ * @param string       $post_type Post type.
+ * @param string       $taxonomy  Taxonomy.
+ * @param array        $args      Arguments for get_post_list.
  */
-function _sc_post_list( array $atts, string $content, string $post_type, string $taxonomy, array $args ): string {
+function _sc_post_list( $atts, string $content, string $post_type, string $taxonomy, array $args ): string {
 	$new_atts = array();
-	foreach ( $atts as $key => $val ) {
-		$key              = str_replace( '-', '_', $key );
-		$new_atts[ $key ] = $val;
+	if ( is_array( $atts ) ) {
+		foreach ( $atts as $key => $val ) {
+			$key              = str_replace( '-', '_', $key );
+			$new_atts[ $key ] = $val;
+		}
 	}
-
 	$defs = array(
 		'echo_content_on_empty' => false,
 	);
