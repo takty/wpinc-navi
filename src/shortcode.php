@@ -103,9 +103,9 @@ function _sc_post_list( $atts, string $content, string $post_type, string $taxon
 		'echo_content_on_empty' => false,
 	);
 
-	$args += shortcode_atts( $defs, $new_atts );
-	$ret   = get_post_list( $args );
-	if ( empty( $ret ) && false !== $atts['echo_content_on_empty'] && ! empty( $content ) ) {
+	$args = shortcode_atts( array_merge( $defs, $args ), $new_atts );
+	$ret  = get_post_list( $args );
+	if ( empty( $ret ) && false !== $args['echo_content_on_empty'] && ! empty( $content ) ) {
 		return $content;
 	}
 	return $ret;
