@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-07-24
+ * @version 2022-07-29
  */
 
 namespace wpinc\navi;
@@ -99,14 +99,52 @@ function _sc_post_list( $atts, string $content, string $post_type, string $taxon
 			$new_atts[ $key ] = $val;
 		}
 	}
-	$defs = array(
-		'echo_content_on_empty' => false,
-	);
+	$atts = _shortcode_atts_filter(
+		array(
+			'echo_content_on_empty',
 
-	$args = shortcode_atts( array_merge( $defs, $args ), $new_atts );
-	$ret  = get_post_list( $args );
+			'post_type',
+			// Key 'year_date_function' is removed.
+			'before',
+			'after',
+			'template_slug',
+			'heading_level',
+			'year_heading_level',
+			'year_format',
+			'taxonomy',
+			'terms',
+			'latest',
+			'sticky',
+			'order',
+			'orderby',
+			'date_after',
+			'date_before',
+		),
+		$new_atts
+	);
+	$ret  = get_post_list( array_merge( $args, $atts ) );
 	if ( empty( $ret ) && false !== $args['echo_content_on_empty'] && ! empty( $content ) ) {
 		return $content;
 	}
 	return $ret;
+}
+
+/**
+ * Filter user attributes with known attributes.
+ *
+ * @access private
+ *
+ * @param array $keys Entire list of supported attributes keys.
+ * @param array $atts User defined attributes in shortcode tag.
+ * @return array Filtered attribute list.
+ */
+function _shortcode_atts_filter( array $keys, array $atts ): array {
+	$atts = (array) $atts;
+	$out  = array();
+	foreach ( $keys as $key ) {
+		if ( array_key_exists( $key, $atts ) ) {
+			$out[ $key ] = $atts[ $key ];
+		}
+	}
+	return $out;
 }
