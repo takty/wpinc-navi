@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-12
+ * @version 2022-08-04
  */
 
 namespace wpinc\navi;
@@ -63,7 +63,7 @@ function get_post_list( array $args = array() ): string {
 		$args['date_before'] = str_pad( $args['date_before'], 8, '9' );
 	}
 	if ( ! is_array( $args['terms'] ) ) {
-		$args['terms'] = array_map( 'trim', explode( ',', $terms ) );
+		$args['terms'] = array_map( 'trim', explode( ',', $args['terms'] ) );
 	}
 	$ps = _get_item_list( $args['post_type'], $args['taxonomy'], $args['terms'], $args['latest'], $args['sticky'] );
 	if ( 'menu_order' === $args['orderby'] ) {
@@ -108,7 +108,7 @@ function _get_item_list( string $post_type, string $taxonomy, array $term_slugs,
 		$args['tax_query'][] = array(
 			'taxonomy' => $taxonomy,
 			'field'    => 'slug',
-			'terms'    => $term_slug,
+			'terms'    => $term_slugs,
 		);
 	}
 	if ( $latest_count ) {
