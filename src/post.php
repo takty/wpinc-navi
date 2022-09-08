@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-14
+ * @version 2022-09-08
  */
 
 namespace wpinc\navi;
@@ -190,8 +190,8 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$format   .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
 
 	if ( isset( $url_parts[1] ) ) {
-		$format       = explode( '?', str_replace( '%_%', $format, $base ) );
-		$format_query = $format[1] ?? '';
+		$ps           = explode( '?', str_replace( '%_%', $format, $base ) );
+		$format_query = $ps[1] ?? '';
 		wp_parse_str( $format_query, $format_args );
 		wp_parse_str( $url_parts[1], $url_query_args );
 		foreach ( $format_args as $format_arg => $format_arg_value ) {
