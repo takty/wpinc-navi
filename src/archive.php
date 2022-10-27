@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-06-02
+ * @version 2022-10-27
  */
 
 namespace wpinc\navi;
@@ -21,10 +21,9 @@ function the_yearly_archive_select( array $args = array() ): void {
 	$dt = $args['default_text'] ?? __( 'Year' );
 
 	$args += array(
-		'post_type' => 'post',
-		'date'      => 'yearly',
-		'type'      => 'select',
-		'meta_key'  => '',  // phpcs:ignore
+		'date'     => 'yearly',
+		'type'     => 'select',
+		'meta_key' => '',  // phpcs:ignore
 	);
 	the_date_archives( $args );
 }
@@ -39,9 +38,8 @@ function the_taxonomy_archive_select( array $args = array() ): void {
 	$dt = $args['default_text'] ?? __( 'Category' );
 
 	$args += array(
-		'post_type' => '',
-		'taxonomy'  => 'category',
-		'type'      => 'select',
+		'taxonomy' => 'category',
+		'type'     => 'select',
 	);
 	the_taxonomy_archives( $args );
 }
@@ -81,7 +79,9 @@ function the_date_archives( array $args = array() ): void {
  * @return array String of links.
  */
 function get_date_archives( array $args = array() ): string {
-	global $wpdb, $wp_locale;
+	$pt = get_post_type();
+	$pt = $pt ? $pt : 'post';
+
 	$args += array(
 		'before'        => '',
 		'after'         => '',
@@ -91,7 +91,7 @@ function get_date_archives( array $args = array() ): string {
 		'link_after'    => '',
 		'do_show_count' => false,
 		'default_text'  => '',
-		'post_type'     => 'post',
+		'post_type'     => $pt,
 
 		'date'          => 'yearly',
 		'limit'         => '',
@@ -242,6 +242,9 @@ function the_taxonomy_archives( array $args = array() ): void {
  * @return array String of links.
  */
 function get_taxonomy_archives( array $args = array() ): string {
+	$pt = get_post_type();
+	$pt = $pt ? $pt : 'post';
+
 	$args += array(
 		'before'        => '',
 		'after'         => '',
@@ -251,7 +254,7 @@ function get_taxonomy_archives( array $args = array() ): string {
 		'link_after'    => '',
 		'do_show_count' => false,
 		'default_text'  => '',
-		'post_type'     => '',
+		'post_type'     => $pt,
 
 		'taxonomy'      => 'category',
 		'limit'         => '',
