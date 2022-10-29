@@ -4,10 +4,12 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-05-30
+ * @version 2022-10-28
  */
 
 namespace wpinc\navi;
+
+require_once __DIR__ . '/assets/url.php';
 
 /**
  * Navigation menu.
@@ -64,22 +66,6 @@ class Nav_Menu {
 	 */
 	public static function add_custom_post_type_archive( string $post_type, string $slug ): void {
 		self::$custom_post_type_archive[ $post_type ] = $slug;
-	}
-
-	/**
-	 * Retrieves the current URL.
-	 *
-	 * @access protected
-	 *
-	 * @param bool $raw Whether the returned value is raw.
-	 * @return string The current URL.
-	 */
-	protected static function get_current_url_( bool $raw = false ): string {
-		// phpcs:disable
-		$host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'];  // When reverse proxy exists.
-		$req  = ( $raw && isset( $_SERVER['REQUEST_URI_ORIG'] ) ) ? $_SERVER['REQUEST_URI_ORIG'] : $_SERVER['REQUEST_URI'];
-		// phpcs:enable
-		return ( is_ssl() ? 'https://' : 'http://' ) . wp_unslash( $host ) . wp_unslash( $req );
 	}
 
 	/**
@@ -177,7 +163,7 @@ class Nav_Menu {
 		$this->title_filter   = $args['title_filter'];
 		$this->content_filter = $args['content_filter'];
 
-		$this->cur_url = trailingslashit( strtok( self::get_current_url_( true ), '?' ) );
+		$this->cur_url = trailingslashit( strtok( \wpinc\get_request_url( true ), '?' ) );
 
 		$mis       = $this->get_all_items_( $args['menu_location'] );
 		$c2p       = $this->get_child_to_parent_( $mis );
