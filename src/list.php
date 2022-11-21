@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-08-04
+ * @version 2022-11-19
  */
 
 namespace wpinc\navi;
@@ -55,12 +55,10 @@ function get_post_list( array $args = array() ): string {
 
 	$args['order'] = strtolower( $args['order'] );
 	if ( ! empty( $args['date_after'] ) ) {
-		$args['date_after'] = preg_replace( '/[^0-9]/', '', $args['date_after'] );
-		$args['date_after'] = str_pad( $args['date_after'], 8, '0' );
+		$args['date_after'] = _align_date( $args['date_after'], '0' );
 	}
 	if ( ! empty( $args['date_before'] ) ) {
-		$args['date_before'] = preg_replace( '/[^0-9]/', '', $args['date_before'] );
-		$args['date_before'] = str_pad( $args['date_before'], 8, '9' );
+		$args['date_before'] = _align_date( $args['date_before'], '9' );
 	}
 	if ( ! is_array( $args['terms'] ) ) {
 		$args['terms'] = array_map( 'trim', explode( ',', $args['terms'] ) );
@@ -85,6 +83,30 @@ function get_post_list( array $args = array() ): string {
 		$items = array_reverse( $items );
 	}
 	return _make_list( $args, $items );
+}
+
+/**
+ * Get aligned date string.
+ *
+ * @access private
+ *
+ * @param string $date Date string.
+ * @param string $pad  Character for padding.
+ * @return string Aligned date string.
+ */
+function _align_date( string $date, string $pad ): string {
+	$date = strtolower( $date );
+	if ( 'yesterday' === $date ) {
+		$date = wp_date( 'Ymd', strtotime( '-1 day' ) );
+	} elseif ( 'today' === $date ) {
+		$date = wp_date( 'Ymd' );
+	} elseif ( 'tomorrow' === $date ) {
+		$date = wp_date( 'Ymd', strtotime( '+1 day' ) );
+	} else {
+		$date = preg_replace( '/[^0-9]/', '', $date );
+		$date = str_pad( $date, 8, $pad );
+	}
+	return $date;
 }
 
 /**

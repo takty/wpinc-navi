@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-07-29
+ * @version 2022-11-19
  */
 
 namespace wpinc\navi;
@@ -123,7 +123,11 @@ function _sc_post_list( $atts, string $content, string $post_type, string $taxon
 		$new_atts
 	);
 	$ret  = get_post_list( array_merge( $args, $atts ) );
-	if ( empty( $ret ) && false !== $args['echo_content_on_empty'] && ! empty( $content ) ) {
+	if (
+		empty( $ret ) &&
+		( ! isset( $args['echo_content_on_empty'] ) || false !== $args['echo_content_on_empty'] ) &&
+		! empty( $content )
+	) {
 		return $content;
 	}
 	return $ret;
