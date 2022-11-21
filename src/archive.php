@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-10-27
+ * @version 2022-11-21
  */
 
 namespace wpinc\navi;
@@ -17,13 +17,11 @@ require_once __DIR__ . '/markup.php';
  * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_yearly_archive_select( array $args = array() ): void {
-	$js = 'document.location.href=this.value;';
-	$dt = $args['default_text'] ?? __( 'Year' );
-
 	$args += array(
-		'date'     => 'yearly',
-		'type'     => 'select',
-		'meta_key' => '',  // phpcs:ignore
+		'type'         => 'select',
+		'default_text' => __( 'Year' ),
+		'date'         => 'yearly',
+		'meta_key'     => '',  // phpcs:ignore
 	);
 	the_date_archives( $args );
 }
@@ -34,12 +32,10 @@ function the_yearly_archive_select( array $args = array() ): void {
  * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archive_select( array $args = array() ): void {
-	$js = 'document.location.href=this.value;';
-	$dt = $args['default_text'] ?? __( 'Category' );
-
 	$args += array(
-		'taxonomy' => 'category',
-		'type'     => 'select',
+		'type'         => 'select',
+		'default_text' => __( 'Category' ),
+		'taxonomy'     => 'category',
 	);
 	the_taxonomy_archives( $args );
 }
@@ -258,7 +254,7 @@ function get_taxonomy_archives( array $args = array() ): string {
 
 		'taxonomy'      => 'category',
 		'limit'         => '',
-		'order'         => 'DESC',
+		'order'         => 'ASC',
 		'hierarchical'  => false,
 		'parent'        => 0,
 	);
@@ -271,8 +267,8 @@ function get_taxonomy_archives( array $args = array() ): string {
 		unset( $gt_args[ $key ] );
 	}
 
-	$lis = _get_taxonomy_link_items( $args['taxonomy'], $args['limit'], $args['order'], $args['post_type'] );
-	$lis = _sort_taxonomy_link_items( $lis, $args['hierarchical'], $gt_args );
+	$lis = _get_taxonomy_link_items( $args['taxonomy'], $args['limit'], $args['order'], $args['hierarchical'], $args['post_type'] );
+	$lis = _sort_taxonomy_link_items( $lis, $args['hierarchical'], $args['post_type'], $gt_args );
 	if ( empty( $lis ) ) {
 		return '';
 	}
@@ -285,13 +281,14 @@ function get_taxonomy_archives( array $args = array() ): string {
  *
  * @access private
  *
- * @param string     $taxonomy  Taxonomy name to which results should be limited.
- * @param string|int $limit     Number of links to limit the query to.
- * @param string     $order     Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
- * @param string     $post_type Post type.
+ * @param string     $taxonomy     Taxonomy name to which results should be limited.
+ * @param string|int $limit        Number of links to limit the query to.
+ * @param string     $order        Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
+ * @param bool       $hierarchical Whether to include terms that have non-empty descendants. Default false.
+ * @param string     $post_type    Post type.
  * @return array Link items.
  */
-function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, string $post_type ): array {
+function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool $hierarchical, string $post_type ): array {
 	global $wpdb;
 	if ( ! empty( $limit ) ) {
 		$limit = ' LIMIT ' . absint( $limit );
@@ -336,15 +333,10 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, stri
 
 	$lis = array();
 	foreach ( (array) $rs as $r ) {
-		$t   = get_term_by( 'term_taxonomy_id', (int) $r->tt_id, $taxonomy );
-		$url = get_term_link( $t );
-		if ( $post_type && 'post' !== $post_type ) {
-			$url = add_query_arg( 'post_type', $post_type, $url );
-		}
-		$text            = sprintf( '%s', $t->name );
-		$current         = is_tax() && $term === $t->slug;
-		$count           = $r->count;
-		$lis[ $t->slug ] = compact( 'url', 'text', 'count', 'current' );
+		$t  = get_term_by( 'term_taxonomy_id', (int) $r->tt_id, $taxonomy );
+		$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, $r->count, is_tax() ? $term : null );
+
+		$lis[ $t->slug ] = $it;
 	}
 	return $lis;
 }
@@ -354,32 +346,76 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, stri
  *
  * @access private
  *
- * @param array $items        Link items.
- * @param bool  $hierarchical Whether to include terms that have non-empty descendants.
- * @param array $query_args   Query arguments for get_terms.
+ * @param array  $items        Link items.
+ * @param bool   $hierarchical Whether to include terms that have non-empty descendants.
+ * @param string $post_type    Post type.
+ * @param array  $query_args   Query arguments for get_terms.
  * @return array Link items.
  */
-function _sort_taxonomy_link_items( array $items, bool $hierarchical, array $query_args ): array {
+function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $post_type, array $query_args ): array {
 	$ret = array();
 
+	if ( $hierarchical ) {
+		$tx  = $query_args['taxonomy'];
+		$ids = array();
+		foreach ( $items as $slug => $it ) {
+			$t   = get_term_by( 'slug', $slug, $tx );
+			$ids = array_merge( $ids, get_ancestors( $t->term_id, $tx ) );
+		}
+		$ids = array_unique( $ids );
+
+		foreach ( $ids as $id ) {
+			$t  = get_term_by( 'term_id', (int) $id, $tx );
+			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type );
+
+			$items[ $t->slug ] = $it;
+		}
+		$query_args['parent'] = '';
+	}
 	foreach ( get_terms( $query_args ) as $t ) {
 		if ( ! isset( $items[ $t->slug ] ) ) {
 			continue;
 		}
 		$ret[] = $items[ $t->slug ];
-
-		if ( $hierarchical ) {
-			$query_args['parent'] = $t->term_id;
-
-			foreach ( get_terms( $query_args ) as $ct ) {
-				if ( ! isset( $items[ $ct->slug ] ) ) {
-					continue;
-				}
-				$is         = $items[ $t->slug ];
-				$is['text'] = '— ' . $is['text'];
-				$ret[]      = $is;
-			}
-		}
 	}
 	return $ret;
+}
+
+/**
+ * Creates a taxonomy link item.
+ *
+ * @param \WP_Term    $t            Term.
+ * @param bool        $hierarchical Whether to include terms that have non-empty descendants.
+ * @param string      $post_type    Post type.
+ * @param int         $count        Count of posts.
+ * @param string|null $slug         Slug of current term.
+ * @return array An item.
+ */
+function _create_taxonomy_link_item( \WP_Term $t, bool $hierarchical, string $post_type, int $count = 0, ?string $slug = null ): array {
+	$url = get_term_link( $t );
+	if ( $post_type && 'post' !== $post_type ) {
+		$url = add_query_arg( 'post_type', $post_type, $url );
+	}
+	$text = $t->name;
+	if ( $hierarchical && $t->parent ) {
+		$line = str_repeat( '—', _get_term_depth( $t ) );
+		$text = "$line $text";
+	}
+	$current = $slug === $t->slug;
+	return compact( 'url', 'text', 'count', 'current' );
+}
+
+/**
+ * Gets depth of the term.
+ *
+ * @param \WP_Term $t Term.
+ * @return int Depth.
+ */
+function _get_term_depth( \WP_Term $t ): int {
+	$d = 0;
+	while ( $t->parent ) {
+		$t = get_term_by( 'term_id', $t->parent, $t->taxonomy );
+		$d++;
+	}
+	return $d;
 }
