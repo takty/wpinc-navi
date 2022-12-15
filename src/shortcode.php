@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-11-19
+ * @version 2022-12-15
  */
 
 namespace wpinc\navi;
@@ -97,6 +97,10 @@ function _sc_post_list( $atts, string $content, string $post_type, string $taxon
 		foreach ( $atts as $key => $val ) {
 			$key              = str_replace( '-', '_', $key );
 			$new_atts[ $key ] = $val;
+
+			if ( 'term' === $key ) {
+				$new_atts['terms'] = $val;
+			}
 		}
 	}
 	$atts = _shortcode_atts_filter(
