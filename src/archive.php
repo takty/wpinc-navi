@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-11-21
+ * @version 2022-12-15
  */
 
 namespace wpinc\navi;
@@ -364,9 +364,10 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
 		}
 		$ids = array_unique( $ids );
 
+		$qvt = is_tax() ? get_query_var( 'term' ) : null;
 		foreach ( $ids as $id ) {
 			$t  = get_term_by( 'term_id', (int) $id, $tx );
-			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type );
+			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, 0, $qvt );
 
 			$items[ $t->slug ] = $it;
 		}
