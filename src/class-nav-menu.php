@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-10-28
+ * @version 2022-12-26
  */
 
 namespace wpinc\navi;
@@ -484,7 +484,7 @@ class Nav_Menu {
 	/**
 	 * Retrieves item IDs.
 	 *
-	 * @param int $parent_id Parent ID.
+	 * @param int $parent_id (Optional) Parent ID. Default 0.
 	 * @return array Item IDs.
 	 */
 	public function get_item_ids( int $parent_id = 0 ): array {
@@ -497,11 +497,11 @@ class Nav_Menu {
 	/**
 	 * Retrieves item ID with the attributes.
 	 *
-	 * @param int   $parent_id  Parent ID.
-	 * @param array $attributes Attributes.
+	 * @param int   $parent_id  (Optional) Parent ID. Default 0.
+	 * @param array $attributes (Optional) Attributes. Default empty.
 	 * @return int|null Item ID.
 	 */
-	public function get_item_id( int $parent_id = 0, array $attributes ): ?int {
+	public function get_item_id( int $parent_id = 0, array $attributes = array() ): ?int {
 		if ( ! is_page() ) {
 			return null;
 		}
@@ -523,7 +523,7 @@ class Nav_Menu {
 	/**
 	 * Checks whether the parent has any children.
 	 *
-	 * @param int $parent_id Parent ID.
+	 * @param int $parent_id (Optional) Parent ID. Default 0.
 	 * @return bool True if it has children.
 	 */
 	public function has_items( int $parent_id = 0 ): bool {
@@ -533,7 +533,7 @@ class Nav_Menu {
 	/**
 	 * Checks whether the parent has any grandchildren, or one of the children of the parent has any children.
 	 *
-	 * @param int $parent_id Parent ID.
+	 * @param int $parent_id (Optional) Parent ID. Default 0.
 	 * @return bool True if it has grandchildren.
 	 */
 	public function has_sub_items( int $parent_id = 0 ): bool {
