@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-09-08
+ * @version 2023-05-15
  */
 
 namespace wpinc\navi;
@@ -233,7 +233,7 @@ function _get_paging_link_function( string $format, string $base, array $add_arg
 		if ( $add_args ) {
 			$url = add_query_arg( $add_args, $url );
 		}
-		$url .= $add_fragment;
+		$url = user_trailingslashit( $url ) . $add_fragment;
 		return apply_filters( 'paginate_links', $url );
 	};
 }
