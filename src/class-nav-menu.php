@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-12-26
+ * @version 2023-05-16
  */
 
 namespace wpinc\navi;
@@ -278,11 +278,13 @@ class Nav_Menu {
 		foreach ( $mis as $mi ) {
 			$slugs     = explode( '/', untrailingslashit( $mi->url ) );
 			$last_slug = array_pop( $slugs );
+
+			$url = user_trailingslashit( $mi->url );
 			if (
 				$archive_slug === $last_slug ||
 				( $mi->object === $cur_tx && $mi->object_id === $cur_term_id ) ||
 				$mi->object === $post_type ||
-				in_array( $mi->url, $cur_term_urls, true )  // TODO.
+				in_array( $url, $cur_term_urls, true )
 			) {
 				$has_curs[] = $mi->ID;
 			}
