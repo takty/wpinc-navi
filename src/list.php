@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-11-19
+ * @version 2023-05-16
  */
 
 namespace wpinc\navi;
@@ -191,7 +191,7 @@ function _make_item_list( array $ps, string $taxonomy, callable $year_date, stri
 	$items = array();
 	foreach ( $ps as $p ) {
 		$title = esc_html( wp_strip_all_tags( get_the_title( $p->ID ) ) );
-		$url   = esc_attr( get_the_permalink( $p->ID ) );
+		$url   = esc_attr( get_permalink( $p->ID ) );
 		$cats  = array();
 		$ts    = get_the_terms( $p, $taxonomy );
 		if ( is_array( $ts ) ) {
