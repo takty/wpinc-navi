@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-05-16
+ * @version 2023-06-01
  */
 
 namespace wpinc\navi;
@@ -279,7 +279,7 @@ class Nav_Menu {
 			$slugs     = explode( '/', untrailingslashit( $mi->url ) );
 			$last_slug = array_pop( $slugs );
 
-			$url = user_trailingslashit( $mi->url );
+			$url = user_trailingslashit( strip_fragment_from_url( $mi->url ) );
 			if (
 				$archive_slug === $last_slug ||
 				( $mi->object === $cur_tx && $mi->object_id === $cur_term_id ) ||
@@ -385,7 +385,7 @@ class Nav_Menu {
 	 * @return bool True if it is currently selected.
 	 */
 	protected function is_current_( \WP_Post $mi ): bool {
-		$url = trailingslashit( $mi->url );
+		$url = trailingslashit( strip_fragment_from_url( $mi->url ) );
 		if ( $url !== $this->cur_url ) {
 			return false;
 		}
