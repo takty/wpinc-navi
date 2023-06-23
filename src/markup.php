@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-02-14
+ * @version 2023-06-23
  */
 
 namespace wpinc\navi;
@@ -12,13 +12,13 @@ namespace wpinc\navi;
 /**
  * Makes navigational markup using passed links.
  *
- * @param string $links              Navigational links.
- * @param string $class              Custom class for the nav element.
- * @param string $screen_reader_text Screen reader text for the nav element.
- * @param string $aria_label         ARIA label for the nav element.
+ * @param string      $links              Navigational links.
+ * @param string|null $class              Custom class for the nav element.
+ * @param string|null $screen_reader_text Screen reader text for the nav element.
+ * @param string|null $aria_label         ARIA label for the nav element.
  * @return string Navigation template tag.
  */
-function make_navigation_markup( string $links, string $class, string $screen_reader_text, string $aria_label ): string {
+function make_navigation_markup( string $links, ?string $class, ?string $screen_reader_text, ?string $aria_label ): string {
 	if ( empty( $screen_reader_text ) ) {
 		$screen_reader_text = __( 'Posts navigation' );
 	}
@@ -35,9 +35,9 @@ function make_navigation_markup( string $links, string $class, string $screen_re
 	);
 	return sprintf(
 		implode( "\n", $temp ) . "\n",
-		sanitize_html_class( $class ),
-		esc_attr( $aria_label ),
-		esc_html( $screen_reader_text ),
+		sanitize_html_class( $class ?? '' ),
+		esc_attr( $aria_label ?? '' ),
+		esc_html( $screen_reader_text ?? '' ),
 		$links
 	);
 }

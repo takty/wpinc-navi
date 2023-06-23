@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-05-15
+ * @version 2023-06-23
  */
 
 namespace wpinc\navi;
@@ -91,7 +91,7 @@ function get_the_post_navigation( array $args = array() ): string {
 	$align = $temps[ $args['archive_link_pos'] ] ?? $temps['center'];
 
 	$ls  = sprintf( $align, $prev, $next, $arch );
-	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'] ?? '', $args['aria_label'] ?? '' );
 	return $args['before'] . $nav . $args['after'];
 }
 
@@ -190,14 +190,18 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$format   .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
 
 	if ( isset( $url_parts[1] ) ) {
-		$ps           = explode( '?', str_replace( '%_%', $format, $base ) );
-		$format_query = $ps[1] ?? '';
+		$ps             = explode( '?', str_replace( '%_%', $format, $base ) );
+		$format_query   = $ps[1] ?? '';
+		$format_args    = array();
+		$url_query_args = array();
 		wp_parse_str( $format_query, $format_args );
 		wp_parse_str( $url_parts[1], $url_query_args );
-		foreach ( $format_args as $format_arg => $format_arg_value ) {
-			unset( $url_query_args[ $format_arg ] );
+		if ( ! empty( $format_args ) && ! empty( $url_query_args ) ) {
+			foreach ( $format_args as $format_arg => $format_arg_value ) {
+				unset( $url_query_args[ $format_arg ] );
+			}
+			$args['add_args'] = array_merge( $args['add_args'], urlencode_deep( $url_query_args ) );
 		}
-		$args['add_args'] = array_merge( $args['add_args'], urlencode_deep( $url_query_args ) );
 	}
 	$get_link = _get_paging_link_function( $format, $base, $args['add_args'], $args['add_fragment'] );
 
@@ -211,7 +215,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$ls[] = make_adjacent_link_markup( $get_link, false, $args['next_text'], $total, $current );
 
 	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
-	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'] ?? '', $args['aria_label'] ?? '' );
 	return $args['before'] . $nav . $args['after'];
 }
 
@@ -229,7 +233,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 function _get_paging_link_function( string $format, string $base, array $add_args, string $add_fragment ): callable {
 	return function ( int $idx ) use ( $format, $base, $add_args, $add_fragment ) {
 		$url = str_replace( '%_%', 1 === $idx ? '' : $format, $base );
-		$url = str_replace( '%#%', $idx, $url );
+		$url = str_replace( '%#%', (string) $idx, $url );
 		if ( $add_args ) {
 			$url = add_query_arg( $add_args, $url );
 		}
