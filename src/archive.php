@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-12-15
+ * @version 2023-06-23
  */
 
 namespace wpinc\navi;
@@ -72,7 +72,7 @@ function the_date_archives( array $args = array() ): void {
  *     @type string     'order'         Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'. Default 'DESC'.
  *     @type string     'meta_key'      Meta key used instead of post_date.
  * }
- * @return array String of links.
+ * @return string String of links.
  */
 function get_date_archives( array $args = array() ): string {
 	$pt = get_post_type();
@@ -235,7 +235,7 @@ function the_taxonomy_archives( array $args = array() ): void {
  *     @type bool       'hierarchical'  Whether to include terms that have non-empty descendants. Default false.
  *     @type int        'parent'        Parent term ID to retrieve direct-child terms of. Default 0.
  * }
- * @return array String of links.
+ * @return string String of links.
  */
 function get_taxonomy_archives( array $args = array() ): string {
 	$pt = get_post_type();

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-05-16
+ * @version 2023-06-23
  */
 
 namespace wpinc\navi;
@@ -326,7 +326,7 @@ function _echo_items( array $items, string $template_slug ): void {
  * @access private
  *
  * @param int $post_id Post ID.
- * @return string[] Array of the year and date strings.
+ * @return int[] Array of the year and date strings.
  */
 function get_item_year_date_topic( int $post_id ): array {
 	$year = (int) get_the_date( 'Y', $post_id );
@@ -341,7 +341,7 @@ function get_item_year_date_topic( int $post_id ): array {
 
  * @param int    $post_id  Post ID.
  * @param string $meta_key Meta key.
- * @return string[] Array of the year and date strings.
+ * @return int[] Array of the year and date strings.
  */
 function get_item_year_date_event( int $post_id, string $meta_key ): array {
 	$date = get_post_meta( $post_id, $meta_key, true );

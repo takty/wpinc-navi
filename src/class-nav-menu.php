@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-01
+ * @version 2023-06-23
  */
 
 namespace wpinc\navi;
@@ -31,21 +31,21 @@ class Nav_Menu {
 	/**
 	 * Whether the menu is cached.
 	 *
-	 * @var 1.0
+	 * @var bool
 	 */
 	protected static $do_cache = false;
 
 	/**
 	 * An array of custom post types to archive slug.
 	 *
-	 * @var 1.0
+	 * @var array
 	 */
 	protected static $custom_post_type_archive = array();
 
 	/**
 	 * An array of used ids of menu items.
 	 *
-	 * @var 1.0
+	 * @var array
 	 */
 	protected static $used_ids = array();
 
@@ -71,63 +71,63 @@ class Nav_Menu {
 	/**
 	 * Anchored page IDs.
 	 *
-	 * @var 1.0
+	 * @var array
 	 */
 	protected $anchored_page_ids;
 
 	/**
 	 * Object types can be current.
 	 *
-	 * @var 1.0
+	 * @var array
 	 */
 	protected $object_types_can_be_current;
 
 	/**
 	 * Home URL.
 	 *
-	 * @var 1.0
+	 * @var string
 	 */
 	protected $home_url;
 
 	/**
 	 * Filter function for titles.
 	 *
-	 * @var 1.0
+	 * @var callable
 	 */
 	protected $title_filter;
 
 	/**
 	 * Filter function for contents.
 	 *
-	 * @var 1.0
+	 * @var callable
 	 */
 	protected $content_filter;
 
 	/**
 	 * Current URL.
 	 *
-	 * @var 1.0
+	 * @var string
 	 */
 	protected $cur_url;
 
 	/**
 	 * Relations of parent ID to child IDs.
 	 *
-	 * @var 1.0
+	 * @var array
 	 */
 	protected $p_to_cs;
 
 	/**
 	 * Menu item attributes.
 	 *
-	 * @var 1.0
+	 * @var array
 	 */
 	protected $id_to_as;
 
 	/**
 	 * Menu ID.
 	 *
-	 * @var 1.0
+	 * @var int|null
 	 */
 	protected $menu_id;
 
@@ -350,7 +350,7 @@ class Nav_Menu {
 				if ( $page_parent === (int) $mi->object_id ) {
 					$as[] = self::CLS_PAGE_PARENT;
 				}
-				if ( in_array( (int) $mi->object_id, $page_ancestors, true ) ) {
+				if ( is_array( $page_ancestors ) && in_array( (int) $mi->object_id, $page_ancestors, true ) ) {
 					$as[]  = self::CLS_PAGE_ANCESTOR;
 					$pas[] = $mi;
 				}
