@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-07-05
  */
 
 namespace wpinc\navi;
@@ -104,6 +104,13 @@ class Nav_Menu {
 	protected $content_filter;
 
 	/**
+	 * Whether to output ID of groups.
+	 *
+	 * @var bool
+	 */
+	protected $do_echo_group_id;
+
+	/**
 	 * Current URL.
 	 *
 	 * @var string
@@ -143,6 +150,7 @@ class Nav_Menu {
 	 *     @type string   'home_url'          Home URL.
 	 *     @type callable 'title_filter'      Filter function for titles. Default 'esc_html'.
 	 *     @type callable 'content_filter'    Filter function for contents. Default 'esc_html'.
+	 *     @type bool     'do_echo_group_id'  Whether to output ID of groups. Default true.
 	 * }
 	 */
 	public function __construct( array $args ) {
@@ -153,15 +161,17 @@ class Nav_Menu {
 			'home_url'          => home_url(),
 			'title_filter'      => 'esc_html',
 			'content_filter'    => 'esc_html',
+			'do_echo_group_id'  => true,
 		);
 
 		$this->anchored_page_ids = $args['anchored_page_ids'];
 		if ( ! empty( $args['object_types'] ) ) {
 			$this->object_types_can_be_current = is_array( $args['object_types'] ) ? $args['object_types'] : array( $args['object_types'] );
 		}
-		$this->home_url       = trailingslashit( $args['home_url'] );
-		$this->title_filter   = $args['title_filter'];
-		$this->content_filter = $args['content_filter'];
+		$this->home_url         = trailingslashit( $args['home_url'] );
+		$this->title_filter     = $args['title_filter'];
+		$this->content_filter   = $args['content_filter'];
+		$this->do_echo_group_id = $args['do_echo_group_id'];
 
 		$this->cur_url = trailingslashit( strtok( \wpinc\get_request_url( true ), '?' ) );
 
@@ -561,24 +571,28 @@ class Nav_Menu {
 	 * @param array $args {
 	 *     An array of arguments.
 	 *
-	 *     @type string   'before'         Content to prepend to the output. Default ''.
-	 *     @type string   'after'          Content to append to the output. Default ''.
-	 *     @type int      'id'             Parent ID. Default 0.
-	 *     @type int      'depth'          Hierarchy depth. Default 1.
-	 *     @type callable 'title_filter'   Filter function for titles.
-	 *     @type callable 'content_filter' Filter function for contents.
+	 *     @type string   'before'           Content to prepend to the output. Default ''.
+	 *     @type string   'after'            Content to append to the output. Default ''.
+	 *     @type int      'id'               Parent ID. Default 0.
+	 *     @type int      'depth'            Hierarchy depth. Default 1.
+	 *     @type string   'group_tag_name'   Tag name of group items.
+	 *     @type callable 'title_filter'     Filter function for titles.
+	 *     @type callable 'content_filter'   Filter function for contents.
+	 *     @type bool     'do_echo_group_id' Whether to output ID of groups.
 	 * }
 	 */
 	public function echo_items( array $args = array() ): void {
 		$args += array(
-			'before'         => '<ul class="menu">',
-			'after'          => '</ul>',
-			'id'             => 0,
-			'depth'          => 1,
-			'title_filter'   => $this->title_filter,
-			'content_filter' => $this->content_filter,
+			'before'           => '<ul class="menu">',
+			'after'            => '</ul>',
+			'id'               => 0,
+			'depth'            => 1,
+			'group_tag_name'   => 'label',
+			'title_filter'     => $this->title_filter,
+			'content_filter'   => $this->content_filter,
+			'do_echo_group_id' => $this->do_echo_group_id,
 		);
-		$this->echo_items_( $args['before'], $args['after'], $args['id'], $args['depth'], $args['title_filter'], $args['content_filter'] );
+		$this->echo_items_( $args['id'], $args['depth'], $args );
 	}
 
 	/**
@@ -586,32 +600,29 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param string   $before         Content to prepend to the output.
-	 * @param string   $after          Content to append to the output.
-	 * @param int      $parent_id      Parent ID.
-	 * @param int      $depth          Hierarchy depth.
-	 * @param callable $title_filter   Filter function for titles.
-	 * @param callable $content_filter Filter function for contents.
+	 * @param int   $parent_id Parent ID.
+	 * @param int   $depth     Hierarchy depth.
+	 * @param array $args      An array of arguments.
 	 */
-	protected function echo_items_( string $before, string $after, int $parent_id, int $depth, $title_filter, $content_filter ): void {
+	protected function echo_items_( int $parent_id, int $depth, array $args ): void {
 		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
 			return;
 		}
 		$mis = $this->p_to_cs[ $parent_id ];
 
-		echo $before;  // phpcs:ignore
+		echo $args['before'];  // phpcs:ignore
 		foreach ( $mis as $mi ) {
 			$as   = $this->id_to_as[ $mi->ID ];
-			$item = $this->get_item_( $mi, $as, $title_filter, $content_filter );
+			$item = $this->get_item_( $mi, $as, $args );
 			if ( 1 < $depth && ! empty( $this->p_to_cs[ $mi->ID ] ) ) {
 				echo $item['before'] . "\n";  // phpcs:ignore
-				$this->echo_items_( $before, $after, $mi->ID, $depth - 1, $title_filter, $content_filter );
+				$this->echo_items_( $mi->ID, $depth - 1, $args );
 				echo $item['after'];  // phpcs:ignore
 			} else {
 				echo $item['before'] . $item['after'];  // phpcs:ignore
 			}
 		}
-		echo $after;  // phpcs:ignore
+		echo $args['after'];  // phpcs:ignore
 	}
 
 	/**
@@ -619,13 +630,12 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param \WP_Post $mi             Menu item.
-	 * @param array    $as             Attributes of the menu item.
-	 * @param callable $title_filter   Filter function for titles.
-	 * @param callable $content_filter Filter function for contents.
+	 * @param \WP_Post $mi   Menu item.
+	 * @param array    $as   Attributes of the menu item.
+	 * @param array    $args An array of arguments.
 	 * @return array Array of markup.
 	 */
-	protected function get_item_( \WP_Post $mi, array $as, $title_filter, $content_filter ): array {
+	protected function get_item_( \WP_Post $mi, array $as, array $args ): array {
 		$as   = is_array( $as ) ? $as : array();
 		$as[] = "menu-item-{$mi->ID}";
 		if ( ! empty( $mi->classes ) ) {
@@ -640,22 +650,28 @@ class Nav_Menu {
 		}
 
 		$li_at    = $id_at . ( empty( $cls ) ? '' : " class=\"$cls\"" );
-		$title    = $title_filter( $mi->title, $mi );
-		$cont     = $content_filter( trim( $mi->post_content ) );
+		$title    = $args['title_filter']( $mi->title, $mi );
+		$cont     = $args['content_filter']( trim( $mi->post_content ) );
 		$cont_div = empty( $cont ) ? '' : "<div class=\"description\">$cont</div>";
 
 		if ( 'post_type_archive' === $mi->type ) {
 			$pto = get_post_type_object( $mi->object );
 			if ( $pto && $pto->labels->archives === $mi->title ) {
 				$title = apply_filters( 'post_type_archive_title', $pto->labels->archives, $mi->object );
-				$title = $title_filter( $title, $mi );
+				$title = $args['title_filter']( $title, $mi );
 			}
 		}
-
+		$before = "<li$li_at>";
 		if ( in_array( self::CLS_SEPARATOR, $as, true ) ) {
-			$before = "<li$li_at><div></div>";
+			$before .= '<div></div>';
 		} elseif ( in_array( self::CLS_GROUP, $as, true ) ) {
-			$before = "<li$li_at><label for=\"panel-{$mi->ID}-ctrl\">$title$cont_div</label>";
+			$tag = $args['group_tag_name'];
+			if ( 'label' === $tag ) {
+				$ida = $args['do_echo_group_id'] ? " for=\"panel-{$mi->ID}-ctrl\"" : '';
+			} elseif ( in_array( $tag, array( 'button', 'span', 'div' ), true ) ) {
+				$ida = $args['do_echo_group_id'] ? " data-panel=\"panel-{$mi->ID}-ctrl\"" : '';
+			}
+			$before .= "<$tag$ida>$title$cont_div</$tag>";
 		} else {
 			$obj_id = (int) $mi->object_id;
 			if ( in_array( $obj_id, $this->anchored_page_ids, true ) ) {
@@ -663,8 +679,8 @@ class Nav_Menu {
 			} else {
 				$href = esc_url( $mi->url );
 			}
-			$target = esc_attr( $mi->target );
-			$before = "<li$li_at><a href=\"$href\" target=\"$target\">$title$cont_div</a>";
+			$target  = esc_attr( $mi->target );
+			$before .= "<a href=\"$href\" target=\"$target\">$title$cont_div</a>";
 		}
 		$after = "</li>\n";
 		return compact( 'before', 'after' );
