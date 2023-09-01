@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-12-15
+ * @version 2023-09-01
  */
 
 namespace wpinc\navi;
@@ -25,11 +25,11 @@ function add_page_navigation_shortcode(): void {
  *
  * @access private
  *
- * @param array|string $atts Attributes.
+ * @param array<string, string>|string $atts Attributes.
  * @return string Result of the shortcode.
  */
 function _sc_child_page_nav( $atts ): string {
-	$atts = shortcode_atts( array( 'style' => '' ), $atts );
+	$atts = shortcode_atts( array( 'style' => '' ), (array) $atts );
 	return \wpinc\navi\get_the_child_page_navigation(
 		array(
 			'class' => "child-page-navigation {$atts['style']}",
@@ -42,11 +42,11 @@ function _sc_child_page_nav( $atts ): string {
  *
  * @access private
  *
- * @param array|string $atts Attributes.
+ * @param array<string, string>|string $atts Attributes.
  * @return string Result of the shortcode.
  */
 function _sc_sibling_page_nav( $atts ): string {
-	$atts = shortcode_atts( array( 'style' => '' ), $atts );
+	$atts = shortcode_atts( array( 'style' => '' ), (array) $atts );
 	return \wpinc\navi\get_the_sibling_page_navigation(
 		array(
 			'class' => "sibling-page-navigation {$atts['style']}",
@@ -61,9 +61,9 @@ function _sc_sibling_page_nav( $atts ): string {
 /**
  * Adds page list shortcode.
  *
- * @param string $post_type Post type.
- * @param string $taxonomy  Taxonomy.
- * @param array  $args      Arguments for get_post_list.
+ * @param string               $post_type Post type.
+ * @param string               $taxonomy  Taxonomy.
+ * @param array<string, mixed> $args      Arguments for get_post_list.
  */
 function add_post_list_shortcode( string $post_type, string $taxonomy = '', array $args = array() ): void {
 	$args += array(
@@ -85,22 +85,20 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
  *
  * @access private
  *
- * @param array|string $atts      Attributes.
- * @param string       $content   The shortcode content.
- * @param string       $post_type Post type.
- * @param string       $taxonomy  Taxonomy.
- * @param array        $args      Arguments for get_post_list.
+ * @param array<string, string>|string $atts      Attributes.
+ * @param string                       $content   The shortcode content.
+ * @param string                       $post_type Post type.
+ * @param string                       $taxonomy  Taxonomy.
+ * @param array<string, mixed>         $args      Arguments for get_post_list.
  */
 function _sc_post_list( $atts, string $content, string $post_type, string $taxonomy, array $args ): string {
 	$new_atts = array();
-	if ( is_array( $atts ) ) {
-		foreach ( $atts as $key => $val ) {
-			$key              = str_replace( '-', '_', $key );
-			$new_atts[ $key ] = $val;
+	foreach ( (array) $atts as $key => $val ) {
+		$key              = str_replace( '-', '_', (string) $key );
+		$new_atts[ $key ] = $val;
 
-			if ( 'term' === $key ) {
-				$new_atts['terms'] = $val;
-			}
+		if ( 'term' === $key ) {
+			$new_atts['terms'] = $val;
 		}
 	}
 	$atts = _shortcode_atts_filter(
@@ -142,9 +140,9 @@ function _sc_post_list( $atts, string $content, string $post_type, string $taxon
  *
  * @access private
  *
- * @param array $keys Entire list of supported attributes keys.
- * @param array $atts User defined attributes in shortcode tag.
- * @return array Filtered attribute list.
+ * @param string[]              $keys Entire list of supported attributes keys.
+ * @param array<string, string> $atts User defined attributes in shortcode tag.
+ * @return array<string, string> Filtered attribute list.
  */
 function _shortcode_atts_filter( array $keys, array $atts ): array {
 	$atts = (array) $atts;

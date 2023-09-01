@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-09-01
  */
 
 namespace wpinc\navi;
@@ -36,8 +36,8 @@ function make_navigation_markup( string $links, ?string $class, ?string $screen_
 	return sprintf(
 		implode( "\n", $temp ) . "\n",
 		sanitize_html_class( $class ?? '' ),
-		esc_attr( $aria_label ?? '' ),
-		esc_html( $screen_reader_text ?? '' ),
+		esc_attr( $aria_label ),
+		esc_html( $screen_reader_text ),
 		$links
 	);
 }
@@ -67,13 +67,13 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
 /**
  * Makes archive links content.
  *
- * @param array  $items         Link item.
- * @param string $type          Link format. Can be 'list', or 'select'.
- * @param string $class         Custom class for the ul or select element.
- * @param string $before        Content to prepend to each link.
- * @param string $after         Content to append to each link.
- * @param bool   $do_show_count Whether the count is shown.
- * @param string $label         Default label for the select element.
+ * @param array<string, mixed>[] $items         Link item.
+ * @param string                 $type          Link format. Can be 'list', or 'select'.
+ * @param string                 $class         Custom class for the ul or select element.
+ * @param string                 $before        Content to prepend to each link.
+ * @param string                 $after         Content to append to each link.
+ * @param bool                   $do_show_count Whether the count is shown.
+ * @param string                 $label         Default label for the select element.
  * @return string HTML content.
  */
 function make_archive_links_markup( array $items, string $type = 'list', string $class = '', string $before = '', string $after = '', bool $do_show_count = false, string $label = '' ): string {
@@ -176,7 +176,7 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
  */
 function _apply_get_archives_link_filter( string $url ): string {
 	$output = trim( get_archives_link( $url, '', 'custom' ) );
-	return preg_replace( '/<a href=(["\'])(.*?)\1><\/a>/', '${2}', $output );
+	return preg_replace( '/<a href=(["\'])(.*?)\1><\/a>/', '${2}', $output ) ?? $output;
 }
 
 /**
@@ -197,7 +197,7 @@ function _assign_link_tags( string $url ): string {
 			'wp_footer',
 			function () use ( &$urls ) {
 				echo "\n<div style=\"display:none;\"><!-- for simply static -->\n";
-				foreach ( $urls as $ui ) {
+				foreach ( $urls as $ui ) {  // @phpstan-ignore-line 'Empty array passed to foreach.'
 					list( $url, $id ) = $ui;
 					echo "\t<link rel=\"archive\" href=\"$url\" id=\"$id\">\n";  // phpcs:ignore
 				}
@@ -223,7 +223,7 @@ function _assign_link_tags( string $url ): string {
  * @param int      $mid_size        How many numbers to either side of the current pages.
  * @param int      $end_size        How many numbers on either the start and the end list edges.
  * @param bool     $do_append_total Whether to append total pages to the current item text.
- * @return array Link items.
+ * @return array<string, mixed>[] Link items.
  */
 function get_archive_link_items( $get_link, int $total, int $current, int $mid_size, int $end_size, bool $do_append_total ): array {
 	$end_size = ( $end_size < 1 ) ? 1 : $end_size;

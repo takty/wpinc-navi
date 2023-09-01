@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-07-05
+ * @version 2023-09-01
  */
 
 namespace wpinc\navi;
@@ -38,14 +38,14 @@ class Nav_Menu {
 	/**
 	 * An array of custom post types to archive slug.
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	protected static $custom_post_type_archive = array();
 
 	/**
 	 * An array of used ids of menu items.
 	 *
-	 * @var array
+	 * @var int[]
 	 */
 	protected static $used_ids = array();
 
@@ -71,14 +71,14 @@ class Nav_Menu {
 	/**
 	 * Anchored page IDs.
 	 *
-	 * @var array
+	 * @var int[]
 	 */
 	protected $anchored_page_ids;
 
 	/**
 	 * Object types can be current.
 	 *
-	 * @var array
+	 * @var string[]
 	 */
 	protected $object_types_can_be_current;
 
@@ -120,14 +120,14 @@ class Nav_Menu {
 	/**
 	 * Relations of parent ID to child IDs.
 	 *
-	 * @var array
+	 * @var array<int, \WP_Post[]>
 	 */
 	protected $p_to_cs;
 
 	/**
 	 * Menu item attributes.
 	 *
-	 * @var array
+	 * @var array<int, string[]>
 	 */
 	protected $id_to_as;
 
@@ -141,7 +141,7 @@ class Nav_Menu {
 	/**
 	 * Constructs a navigation menu.
 	 *
-	 * @param array $args {
+	 * @param array<string, mixed> $args {
 	 *     An array of arguments.
 	 *
 	 *     @type string   'menu_location'     Menu location.
@@ -173,7 +173,7 @@ class Nav_Menu {
 		$this->content_filter   = $args['content_filter'];
 		$this->do_echo_group_id = $args['do_echo_group_id'];
 
-		$this->cur_url = trailingslashit( strtok( \wpinc\get_request_url( true ), '?' ) );
+		$this->cur_url = trailingslashit( (string) strtok( \wpinc\get_request_url( true ), '?' ) );
 
 		$mis       = $this->get_all_items_( $args['menu_location'] );
 		$c2p       = $this->get_child_to_parent_( $mis );
@@ -193,7 +193,7 @@ class Nav_Menu {
 	 * Retrieves all menu items.
 	 *
 	 * @param string $menu_location Menu location.
-	 * @return array Menu items.
+	 * @return \WP_Post[] Menu items.
 	 */
 	protected function get_all_items_( string $menu_location ): array {
 		$ls = get_nav_menu_locations();
@@ -213,8 +213,8 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param array $mis Menu items.
-	 * @return array Relations of parent ID to child IDs.
+	 * @param \WP_Post[] $mis Menu items.
+	 * @return array<int, \WP_Post[]> Relations of parent ID to child IDs.
 	 */
 	protected function get_parent_to_children_( array $mis ): array {
 		$p2cs = array();
@@ -234,8 +234,8 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param array $mis Menu items.
-	 * @return array Relations of child ID to parent ID.
+	 * @param \WP_Post[] $mis Menu items.
+	 * @return array<int, int> Relations of child ID to parent ID.
 	 */
 	protected function get_child_to_parent_( array $mis ): array {
 		$ret = array();
@@ -250,9 +250,9 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param array $mis Menu items.
-	 * @param array $c2p Relations of child ID to parent ID.
-	 * @return array A pair of an array of menu ancestors and Array of menu item ID to its parent ID.
+	 * @param \WP_Post[]      $mis Menu items.
+	 * @param array<int, int> $c2p Relations of child ID to parent ID.
+	 * @return array<mixed> A pair of an array of menu ancestors and Array of menu item ID to its parent ID.
 	 */
 	protected function get_ancestors_of_current_( array $mis, array $c2p ): array {
 		$post_type     = ( is_archive() || is_single() ) ? get_post_type() : null;
@@ -261,26 +261,42 @@ class Nav_Menu {
 		$cur_term_urls = array();
 
 		if ( is_tax() ) {
-			$qo          = get_queried_object();
-			$cur_tx      = $qo->taxonomy;
-			$cur_term_id = $qo->term_id;
+			$qo = get_queried_object();
+			if ( $qo instanceof \WP_Term ) {
+				$cur_tx      = $qo->taxonomy;
+				$cur_term_id = $qo->term_id;
+			}
 		}
 		if ( is_single() ) {
-			$txs = get_object_taxonomies( $post_type );
+			$txs = get_object_taxonomies( (string) $post_type );
 			$pid = get_the_ID();
-			$ts  = array();
-			foreach ( $txs as $tx ) {
-				foreach ( wp_get_post_terms( $pid, $tx ) as $t ) {
-					$ts[ $t->term_taxonomy_id ] = $t;
+			if ( $pid ) {
+				$ts = array();
+				foreach ( $txs as $tx ) {
+					$p_ts = wp_get_post_terms( $pid, $tx );
+					if ( ! is_wp_error( $p_ts ) ) {
+						foreach ( $p_ts as $t ) {
+							$ts[ $t->term_taxonomy_id ] = $t;
 
-					while ( 0 !== $t->parent ) {
-						$t = get_term( $t->parent, $t->taxonomy );
-
-						$ts[ $t->term_taxonomy_id ] = $t;
+							while ( 0 !== $t->parent ) {
+								$t = get_term( $t->parent, $t->taxonomy );
+								if ( $t instanceof \WP_Term ) {
+									$ts[ $t->term_taxonomy_id ] = $t;
+								} else {
+									break;
+								}
+							}
+						}
+					}
+				}
+				$cur_term_urls = array();
+				foreach ( $ts as $t ) {
+					$link = get_term_link( $t );
+					if ( is_string( $link ) ) {
+						$cur_term_urls[] = $link;
 					}
 				}
 			}
-			$cur_term_urls = array_map( 'get_term_link', $ts );
 		}
 		$archive_slug = self::$custom_post_type_archive[ $post_type ] ?? null;
 		$has_curs     = array();
@@ -317,11 +333,11 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param array $mis       Menu items.
-	 * @param array $c2p       Relations of child ID to parent ID.
-	 * @param array $p2cs      Relations of parent ID to child IDs.
-	 * @param array $ancestors Ancestor menu item IDs.
-	 * @return array Relation of item ID to its attributes.
+	 * @param \WP_Post[]             $mis       Menu items.
+	 * @param array<int, int>        $c2p       Relations of child ID to parent ID.
+	 * @param array<int, \WP_Post[]> $p2cs      Relations of parent ID to child IDs.
+	 * @param int[]                  $ancestors Ancestor menu item IDs.
+	 * @return array<int, string[]> Relation of item ID to its attributes.
 	 */
 	protected function get_attributes_( array $mis, array $c2p, array $p2cs, array $ancestors ): array {
 		$p_has_current = array();
@@ -415,8 +431,8 @@ class Nav_Menu {
 	/**
 	 * Callback function for 'wp_update_nav_menu' action.
 	 *
-	 * @param int        $menu_id   ID of the updated menu.
-	 * @param array|null $menu_data An array of menu data.
+	 * @param int                       $menu_id   ID of the updated menu.
+	 * @param array<string, mixed>|null $menu_data An array of menu data.
 	 */
 	public static function cb_wp_update_nav_menu_( int $menu_id, ?array $menu_data = null ): void {
 		if ( is_array( $menu_data ) && isset( $menu_data['menu-name'] ) ) {
@@ -431,11 +447,11 @@ class Nav_Menu {
 	/**
 	 * Callback function for 'save_post_page' action.
 	 *
-	 * @param int      $post_ID Post ID.
+	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
 	 * @param bool     $update  Whether this is an existing post being updated.
 	 */
-	public static function cb_save_post_page_( int $post_ID, \WP_Post $post, bool $update ): void {
+	public static function cb_save_post_page_( int $post_id, \WP_Post $post, bool $update ): void {
 		if ( $update ) {
 			foreach ( get_nav_menu_locations() as $loc => $menu_name ) {
 				$menu = wp_get_nav_menu_object( $menu_name );
@@ -451,9 +467,9 @@ class Nav_Menu {
 	 * Retrieves all menu items of a navigation menu.
 	 *
 	 * @param int|string $id Menu ID, slug, name, or object.
-	 * @return array|false Array of menu items, otherwise false.
+	 * @return \WP_Post[] Array of menu items, otherwise false.
 	 */
-	public static function get_nav_menu_items( $id ) {
+	public static function get_nav_menu_items( $id ): array {
 		if ( self::$do_cache ) {
 			$key   = 'cache-menu-id-' . $id;
 			$items = get_transient( $key );
@@ -487,7 +503,7 @@ class Nav_Menu {
 	 * Retrieves item attributes.
 	 *
 	 * @param int $id Item ID.
-	 * @return array Attributes.
+	 * @return string[] Attributes.
 	 */
 	public function get_attributes( int $id ): array {
 		return $this->id_to_as[ $id ] ?? array();
@@ -497,7 +513,7 @@ class Nav_Menu {
 	 * Retrieves item IDs.
 	 *
 	 * @param int $parent_id (Optional) Parent ID. Default 0.
-	 * @return array Item IDs.
+	 * @return int[] Item IDs.
 	 */
 	public function get_item_ids( int $parent_id = 0 ): array {
 		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
@@ -509,8 +525,8 @@ class Nav_Menu {
 	/**
 	 * Retrieves item ID with the attributes.
 	 *
-	 * @param int   $parent_id  (Optional) Parent ID. Default 0.
-	 * @param array $attributes (Optional) Attributes. Default empty.
+	 * @param int      $parent_id  (Optional) Parent ID. Default 0.
+	 * @param string[] $attributes (Optional) Attributes. Default empty.
 	 * @return int|null Item ID.
 	 */
 	public function get_item_id( int $parent_id = 0, array $attributes = array() ): ?int {
@@ -568,7 +584,7 @@ class Nav_Menu {
 	/**
 	 * Displays menu items.
 	 *
-	 * @param array $args {
+	 * @param array<string, mixed> $args {
 	 *     An array of arguments.
 	 *
 	 *     @type string   'before'           Content to prepend to the output. Default ''.
@@ -600,9 +616,9 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param int   $parent_id Parent ID.
-	 * @param int   $depth     Hierarchy depth.
-	 * @param array $args      An array of arguments.
+	 * @param int                  $parent_id Parent ID.
+	 * @param int                  $depth     Hierarchy depth.
+	 * @param array<string, mixed> $args      An array of arguments.
 	 */
 	protected function echo_items_( int $parent_id, int $depth, array $args ): void {
 		if ( empty( $this->p_to_cs[ $parent_id ] ) ) {
@@ -630,13 +646,12 @@ class Nav_Menu {
 	 *
 	 * @access protected
 	 *
-	 * @param \WP_Post $mi   Menu item.
-	 * @param array    $as   Attributes of the menu item.
-	 * @param array    $args An array of arguments.
-	 * @return array Array of markup.
+	 * @param \WP_Post             $mi   Menu item.
+	 * @param string[]             $as   Attributes of the menu item.
+	 * @param array<string, mixed> $args An array of arguments.
+	 * @return array<string, string> Array of markup.
 	 */
 	protected function get_item_( \WP_Post $mi, array $as, array $args ): array {
-		$as   = is_array( $as ) ? $as : array();
 		$as[] = "menu-item-{$mi->ID}";
 		if ( ! empty( $mi->classes ) ) {
 			$as = array_merge( $as, $mi->classes );
@@ -649,7 +664,7 @@ class Nav_Menu {
 			self::$used_ids[] = $mi->ID;
 		}
 
-		$li_at    = $id_at . ( empty( $cls ) ? '' : " class=\"$cls\"" );
+		$li_at    = $id_at . " class=\"$cls\"";
 		$title    = $args['title_filter']( $mi->title, $mi );
 		$cont     = $args['content_filter']( trim( $mi->post_content ) );
 		$cont_div = empty( $cont ) ? '' : "<div class=\"description\">$cont</div>";
@@ -666,6 +681,7 @@ class Nav_Menu {
 			$before .= '<div></div>';
 		} elseif ( in_array( self::CLS_GROUP, $as, true ) ) {
 			$tag = $args['group_tag_name'];
+			$ida = '';
 			if ( 'label' === $tag ) {
 				$ida = $args['do_echo_group_id'] ? " for=\"panel-{$mi->ID}-ctrl\"" : '';
 			} elseif ( in_array( $tag, array( 'button', 'span', 'div' ), true ) ) {

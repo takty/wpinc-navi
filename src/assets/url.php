@@ -4,7 +4,7 @@
  *
  * @package Wpinc
  * @author Takuto Yanagida
- * @version 2022-10-28
+ * @version 2023-08-30
  */
 
 namespace wpinc;
@@ -13,9 +13,9 @@ if ( ! function_exists( '\wpinc\get_current_url' ) ) {
 	/**
 	 * Gets current URL.
 	 *
-	 * @return string Current URL.
+	 * @return string|false Current URL.
 	 */
-	function get_current_url(): string {
+	function get_current_url() {
 		if ( is_singular() ) {
 			return get_permalink();
 		}
@@ -46,7 +46,7 @@ if ( ! function_exists( '\wpinc\serialize_url' ) ) {
 	/**
 	 * Serializes URL components.
 	 *
-	 * @param array $cs URL components.
+	 * @param array<string, string|int> $cs URL components.
 	 * @return string URL.
 	 */
 	function serialize_url( array $cs ): string {

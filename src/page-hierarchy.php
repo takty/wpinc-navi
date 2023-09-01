@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-09-01
  */
 
 namespace wpinc\navi;
@@ -14,8 +14,8 @@ require_once __DIR__ . '/markup.php';
 /**
  * Displays a child page navigation, when applicable.
  *
- * @param array $args       (Optional) See get_the_child_page_navigation() for available arguments.
- * @param array $query_args (Optional) Arguments for get_post().
+ * @param array<string, mixed> $args       (Optional) See get_the_child_page_navigation() for available arguments.
+ * @param array<string, mixed> $query_args (Optional) Arguments for get_post().
  */
 function the_child_page_navigation( array $args = array(), array $query_args = array() ): void {
 	echo get_the_child_page_navigation( $args, $query_args );  // phpcs:ignore
@@ -24,8 +24,8 @@ function the_child_page_navigation( array $args = array(), array $query_args = a
 /**
  * Displays a sibling page navigation, when applicable.
  *
- * @param array $args       (Optional) See get_the_sibling_page_navigation() for available arguments.
- * @param array $query_args (Optional) Arguments for get_post().
+ * @param array<string, mixed> $args       (Optional) See get_the_sibling_page_navigation() for available arguments.
+ * @param array<string, mixed> $query_args (Optional) Arguments for get_post().
  */
 function the_sibling_page_navigation( array $args = array(), array $query_args = array() ): void {
 	echo get_the_sibling_page_navigation( $args, $query_args );  // phpcs:ignore
@@ -38,7 +38,7 @@ function the_sibling_page_navigation( array $args = array(), array $query_args =
 /**
  * Retrieves a child page navigation, when applicable.
  *
- * @param array $args {
+ * @param array<string, mixed> $args {
  *     (Optional) Default navigation arguments.
  *
  *     @type string        'before'             Content to prepend to the output. Default ''.
@@ -53,7 +53,7 @@ function the_sibling_page_navigation( array $args = array(), array $query_args =
  *     @type string        'links_after'        Content to append to links. Default value: ''
  *     @type callable|null 'filter'             Callback function for filtering. Default null.
  * }
- * @param array $query_args (Optional) Arguments for get_post().
+ * @param array<string, mixed> $query_args (Optional) Arguments for get_post().
  * @return string Markup for child page links.
  */
 function get_the_child_page_navigation( array $args = array(), array $query_args = array() ): string {
@@ -93,7 +93,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 /**
  * Retrieves a sibling page navigation, when applicable.
  *
- * @param array $args {
+ * @param array<string, mixed> $args {
  *     (Optional) Default navigation arguments.
  *
  *     @type string        'before'             Content to prepend to the output. Default ''.
@@ -108,7 +108,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
  *     @type string        'links_after'        Content to append to links. Default value: ''
  *     @type callable|null 'filter'             Callback function for filtering. Default null.
  * }
- * @param array $query_args (Optional) Arguments for get_post().
+ * @param array<string, mixed> $query_args (Optional) Arguments for get_post().
  * @return string Markup for sibling page links.
  */
 function get_the_sibling_page_navigation( array $args = array(), array $query_args = array() ): string {
@@ -158,8 +158,8 @@ function _make_parent_page_link_markup(): string {
 	if ( ! $pid ) {
 		return '';
 	}
-	$url  = get_permalink( $pid );
-	$text = get_the_title( $pid );
+	$url  = (string) get_permalink( $pid );
+	$text = (string) get_the_title( $pid );
 	return sprintf( '<div class="nav-parent"><a class="nav-link" href="%s">%s</a></div>', esc_attr( $url ), esc_html( $text ) );
 }
 
@@ -168,10 +168,10 @@ function _make_parent_page_link_markup(): string {
  *
  * @access private
  *
- * @param array         $query_args Arguments for get_posts().
- * @param int           $parent_id  The ID of the parent page.
- * @param callable|null $filter     Callback function for filtering. Default null.
- * @return array Link items.
+ * @param array<string, mixed> $query_args Arguments for get_posts().
+ * @param int                  $parent_id  The ID of the parent page.
+ * @param callable|null        $filter     Callback function for filtering. Default null.
+ * @return array<string, mixed>[] Link items.
  */
 function _get_page_link_items( array $query_args, int $parent_id, ?callable $filter = null ): array {
 	$query_args += array(
@@ -182,16 +182,21 @@ function _get_page_link_items( array $query_args, int $parent_id, ?callable $fil
 		'order'          => 'asc',
 	);
 
+	$query_args['fields'] = '';
+
 	$ps = get_posts( $query_args );
 	global $post;
 	$lis = array();
 	foreach ( $ps as $p ) {
+		if ( ! ( $p instanceof \WP_Post ) ) {
+			continue;
+		}
 		if ( $filter && ! call_user_func( $filter, $p ) ) {
 			continue;
 		}
 		$lis[] = array(
-			'url'     => get_permalink( $p->ID ),
-			'text'    => get_the_title( $p->ID ),
+			'url'     => (string) get_permalink( $p ),
+			'text'    => get_the_title( $p ),
 			'current' => $post->ID === $p->ID,
 		);
 	}

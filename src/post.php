@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-08-30
  */
 
 namespace wpinc\navi;
@@ -15,7 +15,7 @@ require_once __DIR__ . '/page-break.php';
 /**
  * Displays a post navigation, when applicable.
  *
- * @param array $args (Optional) See get_the_post_navigation() for available arguments.
+ * @param array<string, mixed> $args (Optional) See get_the_post_navigation() for available arguments.
  */
 function the_post_navigation( array $args = array() ): void {
 	echo get_the_post_navigation( $args );  // phpcs:ignore
@@ -24,7 +24,7 @@ function the_post_navigation( array $args = array() ): void {
 /**
  * Displays a posts navigation, when applicable.
  *
- * @param array $args (Optional) See get_the_posts_navigation() for available arguments.
+ * @param array<string, mixed> $args (Optional) See get_the_posts_navigation() for available arguments.
  */
 function the_posts_navigation( array $args = array() ): void {
 	echo get_the_posts_navigation( $args );  // phpcs:ignore
@@ -37,7 +37,7 @@ function the_posts_navigation( array $args = array() ): void {
 /**
  * Retrieves a post navigation, when applicable.
  *
- * @param array $args {
+ * @param array<string, mixed> $args {
  *     (Optional) Default post navigation arguments.
  *
  *     @type string       'before'               Content to prepend to the output. Default ''.
@@ -80,7 +80,7 @@ function get_the_post_navigation( array $args = array() ): string {
 	$arch = '';
 	if ( $args['has_archive_link'] ) {
 		global $post;
-		$url  = get_post_type_archive_link( $post->post_type );
+		$url  = (string) get_post_type_archive_link( $post->post_type );
 		$arch = sprintf( '<div class="nav-archive"><a class="nav-link" href="%s">%s</a></div>', esc_url( $url ), esc_html( $args['archive_text'] ) );
 	}
 	$temps = array(
@@ -107,12 +107,12 @@ function get_the_post_navigation( array $args = array() ): string {
  * @param string       $taxonomy       Taxonomy, if $in_same_term is true.
  * @return string The link URL of the previous or next post in relation to the current post.
  */
-function _get_adjacent_post_link( string $text, bool $previous, $in_same_term, $excluded_terms, $taxonomy ): string {
+function _get_adjacent_post_link( string $text, bool $previous, bool $in_same_term, $excluded_terms, string $taxonomy ): string {
 	$cls  = $previous ? 'nav-previous' : 'nav-next';
 	$post = get_adjacent_post( $in_same_term, $excluded_terms, $previous, $taxonomy );
 
-	if ( $post ) {
-		$url = get_permalink( $post );
+	if ( $post instanceof \WP_Post ) {
+		$url = (string) get_permalink( $post );
 		$rel = $previous ? 'prev' : 'next';
 		return sprintf( '<div class="%s"><a class="nav-link" href="%s" rel="%s">%s</a></div>', $cls, esc_url( $url ), $rel, esc_html( $text ) );
 	}
@@ -126,7 +126,10 @@ function _get_adjacent_post_link( string $text, bool $previous, $in_same_term, $
 /**
  * Retrieves a posts navigation, when applicable.
  *
- * @param array $args {
+ * @global \WP_Query   $wp_query   Query.
+ * @global \WP_Rewrite $wp_rewrite Rewrite.
+ *
+ * @param array<string, mixed> $args {
  *     (Optional) Default posts navigation arguments.
  *
  *     @type string 'before'             Content to prepend to the output. Default 'Previous'.
@@ -153,7 +156,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 	if ( ! isset( $wp_query->max_num_pages ) || $wp_query->max_num_pages < 2 ) {
 		return '';
 	}
-	if ( $wp_query->is_search() && empty( get_search_query() ) ) {
+	if ( is_search() && empty( get_search_query() ) ) {
 		return '';
 	}
 	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
@@ -224,10 +227,10 @@ function get_the_posts_navigation( array $args = array() ): string {
  *
  * @access private
  *
- * @param string $format       Format for the pagination structure.
- * @param string $base         Base of the paginated url.
- * @param array  $add_args     An array of query args to add.
- * @param string $add_fragment A string to append to each link.
+ * @param string               $format       Format for the pagination structure.
+ * @param string               $base         Base of the paginated url.
+ * @param array<string, mixed> $add_args     An array of query args to add.
+ * @param string               $add_fragment A string to append to each link.
  * @return callable Function that retrieves paging links.
  */
 function _get_paging_link_function( string $format, string $base, array $add_args, string $add_fragment ): callable {

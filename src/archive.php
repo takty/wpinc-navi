@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-08-30
  */
 
 namespace wpinc\navi;
@@ -14,7 +14,7 @@ require_once __DIR__ . '/markup.php';
 /**
  * Displays yearly archive select.
  *
- * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
+ * @param array<string, mixed> $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_yearly_archive_select( array $args = array() ): void {
 	$args += array(
@@ -29,7 +29,7 @@ function the_yearly_archive_select( array $args = array() ): void {
 /**
  * Displays taxonomy archive select.
  *
- * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
+ * @param array<string, mixed> $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archive_select( array $args = array() ): void {
 	$args += array(
@@ -47,7 +47,7 @@ function the_taxonomy_archive_select( array $args = array() ): void {
 /**
  * Displays date archive links based on type and format.
  *
- * @param array $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
+ * @param array<string, mixed> $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_date_archives( array $args = array() ): void {
 	echo get_date_archives( $args );  // phpcs:ignore
@@ -56,7 +56,7 @@ function the_date_archives( array $args = array() ): void {
 /**
  * Retrieves date archive links based on type and format.
  *
- * @param array $args {
+ * @param array<string, mixed> $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     'before'        Content to prepend to the output. Default ''.
@@ -113,7 +113,7 @@ function get_date_archives( array $args = array() ): string {
  * @param string     $order     Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
  * @param string     $post_type Post type.
  * @param string     $meta_key  Meta key used instead of post_date.
- * @return array Link items.
+ * @return array<string, mixed>[] Link items.
  */
 function _get_date_link_items( string $type, $limit, string $order, string $post_type, string $meta_key = '' ): array {
 	global $wpdb, $wp_locale;
@@ -125,7 +125,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 		$order = 'DESC';
 	}
 	$pto = get_post_type_object( $post_type );
-	if ( ! is_post_type_viewable( $pto ) ) {
+	if ( ! $pto || ! is_post_type_viewable( $pto ) ) {
 		return array();
 	}
 	$post_type = $pto->name;
@@ -209,7 +209,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 /**
  * Displays taxonomy archive links based on type and format.
  *
- * @param array $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
+ * @param array<string, mixed> $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archives( array $args = array() ): void {
 	echo get_taxonomy_archives( $args );  // phpcs:ignore
@@ -218,7 +218,7 @@ function the_taxonomy_archives( array $args = array() ): void {
 /**
  * Retrieves taxonomy archive links based on type and format.
  *
- * @param array $args {
+ * @param array<string, mixed> $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     'before'        Content to prepend to the output. Default ''.
@@ -286,7 +286,7 @@ function get_taxonomy_archives( array $args = array() ): string {
  * @param string     $order        Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
  * @param bool       $hierarchical Whether to include terms that have non-empty descendants. Default false.
  * @param string     $post_type    Post type.
- * @return array Link items.
+ * @return array<string, mixed>[] Link items.
  */
 function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool $hierarchical, string $post_type ): array {
 	global $wpdb;
@@ -299,7 +299,7 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	}
 	if ( ! empty( $post_type ) ) {
 		$pto = get_post_type_object( $post_type );
-		if ( ! is_post_type_viewable( $pto ) ) {
+		if ( ! $pto || ! is_post_type_viewable( $pto ) ) {
 			return array();
 		}
 		$post_type = $pto->name;
@@ -333,10 +333,12 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 
 	$lis = array();
 	foreach ( (array) $rs as $r ) {
-		$t  = get_term_by( 'term_taxonomy_id', (int) $r->tt_id, $taxonomy );
-		$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, $r->count, is_tax() ? $term : null );
+		$t = get_term_by( 'term_taxonomy_id', (int) $r->tt_id, $taxonomy );
+		if ( $t instanceof \WP_Term ) {
+			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, $r->count, is_tax() ? $term : null );
 
-		$lis[ $t->slug ] = $it;
+			$lis[ $t->slug ] = $it;
+		}
 	}
 	return $lis;
 }
@@ -346,11 +348,11 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
  *
  * @access private
  *
- * @param array  $items        Link items.
- * @param bool   $hierarchical Whether to include terms that have non-empty descendants.
- * @param string $post_type    Post type.
- * @param array  $query_args   Query arguments for get_terms.
- * @return array Link items.
+ * @param array<string, mixed> $items        Link items.
+ * @param bool                 $hierarchical Whether to include terms that have non-empty descendants.
+ * @param string               $post_type    Post type.
+ * @param array<string, mixed> $query_args   Query arguments for get_terms.
+ * @return array<string, mixed>[] Link items.
  */
 function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $post_type, array $query_args ): array {
 	$ret = array();
@@ -359,25 +361,34 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
 		$tx  = $query_args['taxonomy'];
 		$ids = array();
 		foreach ( $items as $slug => $it ) {
-			$t   = get_term_by( 'slug', $slug, $tx );
-			$ids = array_merge( $ids, get_ancestors( $t->term_id, $tx ) );
+			$t = get_term_by( 'slug', $slug, $tx );
+			if ( $t instanceof \WP_Term ) {
+				$ids = array_merge( $ids, get_ancestors( $t->term_id, $tx ) );
+			}
 		}
 		$ids = array_unique( $ids );
 
 		$qvt = is_tax() ? get_query_var( 'term' ) : null;
 		foreach ( $ids as $id ) {
-			$t  = get_term_by( 'term_id', (int) $id, $tx );
-			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, 0, $qvt );
+			$t = get_term_by( 'term_id', (int) $id, $tx );
+			if ( $t instanceof \WP_Term ) {
+				$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, 0, $qvt );
 
-			$items[ $t->slug ] = $it;
+				$items[ $t->slug ] = $it;
+			}
 		}
 		$query_args['parent'] = '';
 	}
-	foreach ( get_terms( $query_args ) as $t ) {
-		if ( ! isset( $items[ $t->slug ] ) ) {
-			continue;
+	$ts = get_terms( $query_args );
+	if ( is_array( $ts ) ) {
+		foreach ( $ts as $t ) {
+			if ( $t instanceof \WP_Term ) {
+				if ( ! isset( $items[ $t->slug ] ) ) {
+					continue;
+				}
+				$ret[] = $items[ $t->slug ];
+			}
 		}
-		$ret[] = $items[ $t->slug ];
 	}
 	return $ret;
 }
@@ -390,7 +401,7 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
  * @param string      $post_type    Post type.
  * @param int         $count        Count of posts.
  * @param string|null $slug         Slug of current term.
- * @return array An item.
+ * @return array<string, mixed> An item.
  */
 function _create_taxonomy_link_item( \WP_Term $t, bool $hierarchical, string $post_type, int $count = 0, ?string $slug = null ): array {
 	$url = get_term_link( $t );
@@ -414,7 +425,7 @@ function _create_taxonomy_link_item( \WP_Term $t, bool $hierarchical, string $po
  */
 function _get_term_depth( \WP_Term $t ): int {
 	$d = 0;
-	while ( $t->parent ) {
+	while ( $t instanceof \WP_Term && $t->parent ) {
 		$t = get_term_by( 'term_id', $t->parent, $t->taxonomy );
 		$d++;
 	}

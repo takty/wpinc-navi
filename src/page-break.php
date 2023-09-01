@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-06-23
+ * @version 2023-08-30
  */
 
 namespace wpinc\navi;
@@ -12,7 +12,7 @@ namespace wpinc\navi;
 /**
  * Displays a page break navigation, when applicable.
  *
- * @param array $args (Optional) See get_the_page_break_navigation() for available arguments.
+ * @param array<string, mixed> $args (Optional) See get_the_page_break_navigation() for available arguments.
  */
 function the_page_break_navigation( array $args = array() ): void {
 	echo get_the_page_break_navigation( $args );  // phpcs:ignore
@@ -25,7 +25,7 @@ function the_page_break_navigation( array $args = array() ): void {
 /**
  * Displays the navigation to page breaks, when applicable.
  *
- * @param array $args {
+ * @param array<string, mixed> $args {
  *     (Optional) Default page break navigation arguments.
  *
  *     @type string 'before'             Content to prepend to the output. Default ''.
@@ -104,14 +104,14 @@ function get_page_break_link( int $idx, ?\WP_Post $post = null ): string {
 	if ( ! $post ) {
 		return '';
 	}
-	$url = get_permalink( $post );
+	$url = (string) get_permalink( $post );
 	if ( 1 < $idx ) {
-		if ( empty( get_option( 'permalink_structure' ) ) || ( $post && in_array( $post->post_status, array( 'draft', 'pending' ), true ) ) ) {
+		if ( empty( get_option( 'permalink_structure' ) ) || ( in_array( $post->post_status, array( 'draft', 'pending' ), true ) ) ) {
 			$url = add_query_arg( 'page', $idx, $url );
 		} elseif ( 'page' === get_option( 'show_on_front' ) && get_option( 'page_on_front' ) === $post->ID ) {
-			$url = trailingslashit( $url ) . user_trailingslashit( "$wp_rewrite->pagination_base/" . $idx, 'single_paged' );
+			$url = trailingslashit( $url ) . user_trailingslashit( "$wp_rewrite->pagination_base/$idx", 'single_paged' );
 		} else {
-			$url = trailingslashit( $url ) . user_trailingslashit( $idx, 'single_paged' );
+			$url = trailingslashit( $url ) . user_trailingslashit( (string) $idx, 'single_paged' );
 		}
 	}
 	if ( is_preview() ) {
@@ -122,7 +122,7 @@ function get_page_break_link( int $idx, ?\WP_Post $post = null ): string {
 			$query_args['preview_nonce'] = wp_unslash( $_GET['preview_nonce'] );
 		}
 		// phpcs:enable
-		$url = get_preview_post_link( $post, $query_args, $url );
+		$url = (string) get_preview_post_link( $post, $query_args, $url );
 	}
 	return $url;
 }
