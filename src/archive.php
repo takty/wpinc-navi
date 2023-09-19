@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-08-30
+ * @version 2023-09-19
  */
 
 namespace wpinc\navi;
@@ -193,7 +193,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 				$url = add_query_arg( 'post_type', $post_type, $url );
 			}
 			$text    = sprintf( '%1$d-%2$02d-%3$02d 00:00:00', $r->year, $r->month, $r->dayofmonth );
-			$text    = mysql2date( get_option( 'date_format' ), $text );
+			$text    = (string) mysql2date( get_option( 'date_format' ), $text );
 			$count   = $r->count;
 			$current = is_archive() && (string) $year === (string) $r->year && (string) $monthnum === (string) $r->month && (string) $day === (string) $r->dayofmonth;
 			$lis[]   = compact( 'url', 'text', 'count', 'current' );
