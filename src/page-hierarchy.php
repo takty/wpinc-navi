@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-09-01
+ * @version 2023-09-20
  */
 
 namespace wpinc\navi;
@@ -52,6 +52,7 @@ function the_sibling_page_navigation( array $args = array(), array $query_args =
  *     @type string        'links_before'       Content to prepend to links. Default value: ''
  *     @type string        'links_after'        Content to append to links. Default value: ''
  *     @type callable|null 'filter'             Callback function for filtering. Default null.
+ *     @type int           'post'               (Optional) Post ID.
  * }
  * @param array<string, mixed> $query_args (Optional) Arguments for get_post().
  * @return string Markup for child page links.
@@ -73,9 +74,13 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
 		'links_before'       => '',
 		'links_after'        => '',
 		'filter'             => null,
+		'post_id'            => 0,
 	);
-	global $post;
-	$lis = _get_page_link_items( $query_args, $post->ID, $args['filter'] );
+	if ( ! $args['post_id'] ) {
+		global $post;
+		$args['post_id'] = $post->ID;
+	}
+	$lis = _get_page_link_items( $query_args, $args['post_id'], $args['filter'] );
 	if ( count( $lis ) === 0 ) {
 		return '';
 	}
@@ -107,6 +112,7 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
  *     @type string        'links_before'       Content to prepend to links. Default value: ''
  *     @type string        'links_after'        Content to append to links. Default value: ''
  *     @type callable|null 'filter'             Callback function for filtering. Default null.
+ *     @type int           'post'               (Optional) Post ID.
  * }
  * @param array<string, mixed> $query_args (Optional) Arguments for get_post().
  * @return string Markup for sibling page links.
@@ -128,14 +134,24 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
 		'links_before'       => '',
 		'links_after'        => '',
 		'filter'             => null,
+		'post_id'            => 0,
 	);
-	global $post;
-	$lis = _get_page_link_items( $query_args, $post->post_parent, $args['filter'] );
+	$pp_id = 0;
+	if ( $args['post_id'] ) {
+		$post = get_post( $args['post_id'] );
+		if ( $post instanceof \WP_Post ) {
+			$pp_id = $post->post_parent;
+		}
+	} else {
+		global $post;
+		$pp_id = $post->post_parent;
+	}
+	$lis = _get_page_link_items( $query_args, $pp_id, $args['filter'] );
 	if ( count( $lis ) === 0 ) {
 		return '';
 	}
 	$ls   = array();
-	$ls[] = _make_parent_page_link_markup();
+	$ls[] = _make_parent_page_link_markup( $pp_id );
 	$ls[] = $args['links_before'];
 	$ls[] = make_archive_links_markup( $lis, $args['type'], 'nav-items', $args['link_before'], $args['link_after'] );
 	$ls[] = $args['links_after'];
@@ -150,16 +166,19 @@ function get_the_sibling_page_navigation( array $args = array(), array $query_ar
  *
  * @access private
  *
+ * @param int $pp_id Post ID of the parent post.
  * @return string The parent page link wrapped in a div element.
  */
-function _make_parent_page_link_markup(): string {
-	global $post;
-	$pid = $post->post_parent;
-	if ( ! $pid ) {
+function _make_parent_page_link_markup( int $pp_id = 0 ): string {
+	if ( ! $pp_id ) {
+		global $post;
+		$pp_id = $post->post_parent;
+	}
+	if ( ! $pp_id ) {
 		return '';
 	}
-	$url  = (string) get_permalink( $pid );
-	$text = (string) get_the_title( $pid );
+	$url  = (string) get_permalink( $pp_id );
+	$text = (string) get_the_title( $pp_id );
 	return sprintf( '<div class="nav-parent"><a class="nav-link" href="%s">%s</a></div>', esc_attr( $url ), esc_html( $text ) );
 }
 
