@@ -4,15 +4,34 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-09-01
+ * @version 2023-10-13
  */
 
 namespace wpinc\navi;
 
-/**
+/** phpcs:ignore
  * Makes post list of specific post type.
+ * phpcs:ignore
+ * @param array{
+ *     post_type?         : string,
+ *     year_date_function?: callable,
+ *     before?            : string,
+ *     after?             : string,
+ *     template_slug?     : string,
+ *     heading_level?     : int,
+ *     year_heading_level?: int,
+ *     year_format?       : string,
+ *     taxonomy?          : string,
+ *     terms?             : string|string[],
+ *     latest?            : int,
+ *     sticky?            : bool,
+ *     order?             : string,
+ *     orderby?           : string,
+ *     date_after?        : string,
+ *     date_before?       : string,
+ * } $args Arguments.
  *
- * @param array<string, mixed> $args {
+ * $args {
  *     Arguments.
  *
  *     @type string          'post_type'          Post type.
@@ -135,6 +154,14 @@ function _get_item_list( string $post_type, string $taxonomy, array $term_slugs,
 		);
 	}
 	if ( $latest_count ) {
+		$args['posts_per_page'] = $latest_count;
+		/**
+		 * Posts. This is determined by $args['fields'] being ''.
+		 *
+		 * @var \WP_Post[] $ps
+		 */
+		$ps = get_posts( $args );
+
 		if ( $sticky ) {
 			$args_s                   = $args;
 			$args_s['posts_per_page'] = -1;
@@ -143,16 +170,26 @@ function _get_item_list( string $post_type, string $taxonomy, array $term_slugs,
 				'key'   => '_sticky',
 				'value' => '1',
 			);
-			$args['posts_per_page']   = $latest_count;
-
-			return _add_posts( get_posts( $args_s ), get_posts( $args ), $latest_count );
+			/**
+			 * Posts. This is determined by $args_s['fields'] being ''.
+			 *
+			 * @var \WP_Post[] $ps_s
+			 */
+			$ps_s = get_posts( $args_s );
+			return _add_posts( $ps_s, $ps, $latest_count );
 		} else {
-			$args['posts_per_page'] = $latest_count;
-			return get_posts( $args );
+			return $ps;
 		}
 	}
 	$args['posts_per_page'] = -1;
-	return get_posts( $args );
+
+	/**
+	 * Posts. This is determined by $args['fields'] being ''.
+	 *
+	 * @var \WP_Post[] $ps
+	 */
+	$ps = get_posts( $args );
+	return $ps;
 }
 
 /**
@@ -180,15 +217,23 @@ function _add_posts( array $augend, array $addend, ?int $count = null ): array {
  * Makes post items.
  *
  * @access private
+ * @psalm-suppress RedundantCastGivenDocblockType
  *
- * @param \WP_Post[] $ps        Posts.
- * @param string     $taxonomy  Taxonomy.
- * @param callable   $year_date Function that retrieves year and date from a post.
- * @param string     $after     Date to retrieve posts after.
- * @param string     $before    Date to retrieve posts before.
- * @return array<string, mixed>[] Post item.
+ * @param \WP_Post[]      $ps        Posts.
+ * @param string          $taxonomy  Taxonomy.
+ * @param callable|string $year_date Function that retrieves year and date from a post.
+ * @param string          $after     Date to retrieve posts after.
+ * @param string          $before    Date to retrieve posts before.
+ * @return list<array{
+ *     title: string,
+ *     cats : string[],
+ *     url  : string,
+ *     year : int,
+ *     date : int,
+ *     p    : \WP_Post,
+ * }> Post item.
  */
-function _make_item_list( array $ps, string $taxonomy, callable $year_date, string $after, string $before ): array {
+function _make_item_list( array $ps, string $taxonomy, $year_date, string $after, string $before ): array {
 	$items = array();
 	foreach ( $ps as $p ) {
 		$title = wp_strip_all_tags( get_the_title( $p ) );
@@ -200,8 +245,15 @@ function _make_item_list( array $ps, string $taxonomy, callable $year_date, stri
 				$cats[] = $t->name;
 			}
 		}
-		list( $year, $date ) = call_user_func( $year_date, $p->ID );
-
+		$year = 0;
+		$date = 0;
+		if ( is_callable( $year_date ) ) {
+			list( $year, $date ) = call_user_func( $year_date, $p->ID );
+			if ( ! is_int( $year ) || ! is_int( $date ) ) {
+				$year = 0;
+				$date = 0;
+			}
+		}
 		if ( $after && $date < $after ) {
 			continue;
 		}
@@ -213,29 +265,40 @@ function _make_item_list( array $ps, string $taxonomy, callable $year_date, stri
 	return $items;
 }
 
-/**
+/** phpcs:ignore
  * Makes list markup.
  *
  * @access private
+ * phpcs:ignore
+ * @param array{
+ *     before            : string,
+ *     after             : string,
+ *     template_slug     : string,
+ *     heading_level     : int,
+ *     year_heading_level: int,
+ *     year_format       : string,
+ *     taxonomy          : string,
+ *     terms             : string[],
+ * } $args Arguments.
  *
- * @param array<string, mixed>   $args {
+ * $args {
  *     Arguments.
  *
  *     @type string   'before'             Content to prepend to the output.
  *     @type string   'after'              Content to append to the output.
  *     @type string   'template_slug'      (Optional) The slug name for the generic template.
- *     @type string   'heading_level'      Heading element level.
+ *     @type int      'heading_level'      Heading element level.
  *     @type int      'year_heading_level' Year heading element level.
  *     @type string   'year_format'        Format string of year.
  *     @type string   'taxonomy'           Taxonomy.
  *     @type string[] 'terms'              Terms.
  * }
- * @param array<string, mixed>[] $items Post items.
+ * @param array{ title: string, cats: string[], url: string, year: int, date: int, p: \WP_Post }[] $items Post items.
  */
 function _make_list( array $args, array $items ): string {
 	ob_start();
 	if ( $args['heading_level'] ) {
-		$tag = _get_heading_tag_name( (int) $args['heading_level'] );
+		$tag = _get_heading_tag_name( $args['heading_level'] );
 		$tns = array();
 		foreach ( $args['terms'] as $slug ) {
 			$t = get_term_by( 'slug', $slug, $args['taxonomy'] );
@@ -250,15 +313,15 @@ function _make_list( array $args, array $items ): string {
 	if ( $args['year_heading_level'] ) {
 		$ac = array();
 		foreach ( $items as $it ) {
-			$year = is_numeric( $it['year'] ) ? $it['year'] : '-';
+			$year = $it['year'] ? (string) $it['year'] : '-';
 			if ( ! isset( $ac[ $year ] ) ) {
 				$ac[ $year ] = array();
 			}
 			$ac[ $year ][] = $it;
 		}
-		$sub_tag = _get_heading_tag_name( (int) $args['year_heading_level'] );
+		$sub_tag = _get_heading_tag_name( $args['year_heading_level'] );
 
-		foreach ( $ac as $year => $items ) {
+		foreach ( $ac as $items ) {
 			$year = (string) $items[0]['year'];
 			if ( is_numeric( $year ) ) {
 				$date = date_create_from_format( 'Y', $year );
@@ -289,13 +352,21 @@ function _get_heading_tag_name( int $level ): string {
 	return ( 1 <= $level && $level <= 6 ) ? "h$level" : 'h3';
 }
 
-/**
+/** phpcs:ignore
  * Echos post items.
  *
  * @access private
- *
- * @param array<string, mixed>[] $items         Post items.
- * @param string                 $template_slug The slug name for the generic template.
+ * @global \WP_Post|null $post
+ * phpcs:ignore
+ * @param array{
+ *     title: string,
+ *     cats : string[],
+ *     url  : string,
+ *     year : int,
+ *     date : int,
+ *     p    : \WP_Post
+ * }[] $items Post items.
+ * @param string $template_slug The slug name for the generic template.
  */
 function _echo_items( array $items, string $template_slug ): void {
 	global $post;
@@ -347,6 +418,9 @@ function get_item_year_date_topic( int $post_id ): array {
  */
 function get_item_year_date_event( int $post_id, string $meta_key ): array {
 	$date = get_post_meta( $post_id, $meta_key, true );
+	if ( ! is_string( $date ) ) {
+		return array( 0, 0 );
+	}
 	$year = (int) explode( '-', $date )[0];
 	$date = (int) str_replace( '-', '', $date );
 	return array( $year, $date );

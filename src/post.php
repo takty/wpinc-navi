@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-08-30
+ * @version 2023-10-13
  */
 
 namespace wpinc\navi;
@@ -12,19 +12,52 @@ namespace wpinc\navi;
 require_once __DIR__ . '/markup.php';
 require_once __DIR__ . '/page-break.php';
 
-/**
+/** phpcs:ignore
  * Displays a post navigation, when applicable.
  *
- * @param array<string, mixed> $args (Optional) See get_the_post_navigation() for available arguments.
+ * phpcs:ignore
+ * @param array{
+ *     before?            : string,
+ *     after?             : string,
+ *     prev_text?         : string,
+ *     next_text?         : string,
+ *     screen_reader_text?: string,
+ *     aria_label?        : string,
+ *     class?             : string,
+ *     in_same_term?      : bool,
+ *     excluded_terms?    : int[]|string,
+ *     taxonomy?          : string,
+ *     has_archive_link?  : bool,
+ *     archive_text?      : string,
+ *     archive_link_pos?  : string,
+ * } $args (Optional) Default post navigation arguments.
  */
 function the_post_navigation( array $args = array() ): void {
 	echo get_the_post_navigation( $args );  // phpcs:ignore
 }
 
-/**
+/** phpcs:ignore
  * Displays a posts navigation, when applicable.
  *
- * @param array<string, mixed> $args (Optional) See get_the_posts_navigation() for available arguments.
+ * phpcs:ignore
+ * @param array{
+ *     before?            : string,
+ *     after?             : string,
+ *     prev_text?         : string,
+ *     next_text?         : string,
+ *     screen_reader_text?: string,
+ *     aria_label?        : string,
+ *     class?             : string,
+ *     type?              : string,
+ *     mid_size?          : string,
+ *     end_size?          : string,
+ *     link_before?       : string,
+ *     link_after?        : string,
+ *     links_before?      : string,
+ *     links_after?       : string,
+ *     add_args?          : string,
+ *     add_fragment?      : string,
+ * } $args (Optional) Default posts navigation arguments.
  */
 function the_posts_navigation( array $args = array() ): void {
 	echo get_the_posts_navigation( $args );  // phpcs:ignore
@@ -34,10 +67,27 @@ function the_posts_navigation( array $args = array() ): void {
 // -----------------------------------------------------------------------------
 
 
-/**
+/** phpcs:ignore
  * Retrieves a post navigation, when applicable.
  *
- * @param array<string, mixed> $args {
+ * @global \WP_Post $post
+ * phpcs:ignore
+ * @param array{
+ *     before?            : string,
+ *     after?             : string,
+ *     prev_text?         : string,
+ *     next_text?         : string,
+ *     screen_reader_text?: string,
+ *     aria_label?        : string,
+ *     class?             : string,
+ *     in_same_term?      : bool,
+ *     excluded_terms?    : int[]|string,
+ *     taxonomy?          : string,
+ *     has_archive_link?  : bool,
+ *     archive_text?      : string,
+ *     archive_link_pos?  : string,
+ * } $args (Optional) Default post navigation arguments.
+ * $args {
  *     (Optional) Default post navigation arguments.
  *
  *     @type string       'before'               Content to prepend to the output. Default ''.
@@ -78,8 +128,8 @@ function get_the_post_navigation( array $args = array() ): string {
 	$prev = _get_adjacent_post_link( $args['prev_text'], true, $args['in_same_term'], $args['excluded_terms'], $args['taxonomy'] );
 	$next = _get_adjacent_post_link( $args['next_text'], false, $args['in_same_term'], $args['excluded_terms'], $args['taxonomy'] );
 	$arch = '';
+	global $post;
 	if ( $args['has_archive_link'] ) {
-		global $post;
 		$url  = (string) get_post_type_archive_link( $post->post_type );
 		$arch = sprintf( '<div class="nav-archive"><a class="nav-link" href="%s">%s</a></div>', esc_url( $url ), esc_html( $args['archive_text'] ) );
 	}
@@ -91,7 +141,7 @@ function get_the_post_navigation( array $args = array() ): string {
 	$align = $temps[ $args['archive_link_pos'] ] ?? $temps['center'];
 
 	$ls  = sprintf( $align, $prev, $next, $arch );
-	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'] ?? '', $args['aria_label'] ?? '' );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );
 	return $args['before'] . $nav . $args['after'];
 }
 
@@ -99,6 +149,7 @@ function get_the_post_navigation( array $args = array() ): string {
  * Retrieves the adjacent page break link.
  *
  * @access private
+ * @psalm-suppress RedundantCastGivenDocblockType
  *
  * @param string       $text           Text for anchor link.
  * @param bool         $previous       Whether to display link to previous or next post.
@@ -123,13 +174,31 @@ function _get_adjacent_post_link( string $text, bool $previous, bool $in_same_te
 // -----------------------------------------------------------------------------
 
 
-/**
+/** phpcs:ignore
  * Retrieves a posts navigation, when applicable.
  *
  * @global \WP_Query   $wp_query   Query.
  * @global \WP_Rewrite $wp_rewrite Rewrite.
- *
- * @param array<string, mixed> $args {
+ * phpcs:ignore
+ * @param array{
+ *     before?            : string,
+ *     after?             : string,
+ *     prev_text?         : string,
+ *     next_text?         : string,
+ *     screen_reader_text?: string,
+ *     aria_label?        : string,
+ *     class?             : string,
+ *     type?              : string,
+ *     mid_size?          : string,
+ *     end_size?          : string,
+ *     link_before?       : string,
+ *     link_after?        : string,
+ *     links_before?      : string,
+ *     links_after?       : string,
+ *     add_args?          : string,
+ *     add_fragment?      : string,
+ * } $args (Optional) Default posts navigation arguments.
+ * $args {
  *     (Optional) Default posts navigation arguments.
  *
  *     @type string 'before'             Content to prepend to the output. Default 'Previous'.
@@ -153,7 +222,7 @@ function _get_adjacent_post_link( string $text, bool $previous, bool $in_same_te
  */
 function get_the_posts_navigation( array $args = array() ): string {
 	global $wp_query, $wp_rewrite;
-	if ( ! isset( $wp_query->max_num_pages ) || $wp_query->max_num_pages < 2 ) {
+	if ( $wp_query->max_num_pages < 2 ) {
 		return '';
 	}
 	if ( is_search() && empty( get_search_query() ) ) {
@@ -187,7 +256,8 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$base      = html_entity_decode( get_pagenum_link() );
 	$url_parts = explode( '?', $base );
 	$total     = $wp_query->max_num_pages;
-	$current   = get_query_var( 'paged' ) ? ( (int) get_query_var( 'paged' ) ) : 1;
+	$current   = get_query_var( 'paged', 1 );
+	$current   = is_numeric( $current ) ? (int) $current : 1;
 	$base      = trailingslashit( $url_parts[0] ) . '%_%';
 	$format    = $wp_rewrite->using_index_permalinks() && ! strpos( $base, 'index.php' ) ? 'index.php/' : '';
 	$format   .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
@@ -200,7 +270,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 		wp_parse_str( $format_query, $format_args );
 		wp_parse_str( $url_parts[1], $url_query_args );
 		if ( ! empty( $format_args ) && ! empty( $url_query_args ) ) {
-			foreach ( $format_args as $format_arg => $format_arg_value ) {
+			foreach ( $format_args as $format_arg => $_format_arg_value ) {
 				unset( $url_query_args[ $format_arg ] );
 			}
 			$args['add_args'] = array_merge( $args['add_args'], urlencode_deep( $url_query_args ) );
@@ -218,7 +288,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$ls[] = make_adjacent_link_markup( $get_link, false, $args['next_text'], $total, $current );
 
 	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
-	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'] ?? '', $args['aria_label'] ?? '' );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );  // @phan-suppress-current-line PhanTypePossiblyInvalidDimOffset
 	return $args['before'] . $nav . $args['after'];
 }
 

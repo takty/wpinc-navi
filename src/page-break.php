@@ -4,15 +4,33 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-08-30
+ * @version 2023-10-13
  */
 
 namespace wpinc\navi;
 
-/**
+require_once __DIR__ . '/markup.php';
+
+/** phpcs:ignore
  * Displays a page break navigation, when applicable.
  *
- * @param array<string, mixed> $args (Optional) See get_the_page_break_navigation() for available arguments.
+ * phpcs:ignore
+ * @param array{
+ *     before?            : string,
+ *     after?             : string,
+ *     prev_text?         : string,
+ *     next_text?         : string,
+ *     screen_reader_text?: string,
+ *     aria_label?        : string,
+ *     class?             : string,
+ *     type?              : string,
+ *     mid_size?          : int,
+ *     end_size?          : int,
+ *     link_before?       : string,
+ *     link_after?        : string,
+ *     links_before?      : string,
+ *     links_after?       : string,
+ * } $args (Optional) Default page break navigation arguments.
  */
 function the_page_break_navigation( array $args = array() ): void {
 	echo get_the_page_break_navigation( $args );  // phpcs:ignore
@@ -22,10 +40,28 @@ function the_page_break_navigation( array $args = array() ): void {
 // -----------------------------------------------------------------------------
 
 
-/**
+/** phpcs:ignore
  * Displays the navigation to page breaks, when applicable.
  *
- * @param array<string, mixed> $args {
+ * phpcs:ignore
+ * @param array{
+ *     before?            : string,
+ *     after?             : string,
+ *     prev_text?         : string,
+ *     next_text?         : string,
+ *     screen_reader_text?: string,
+ *     aria_label?        : string,
+ *     class?             : string,
+ *     type?              : string,
+ *     mid_size?          : int,
+ *     end_size?          : int,
+ *     link_before?       : string,
+ *     link_after?        : string,
+ *     links_before?      : string,
+ *     links_after?       : string,
+ * } $args (Optional) Default page break navigation arguments.
+ *
+ * $args {
  *     (Optional) Default page break navigation arguments.
  *
  *     @type string 'before'             Content to prepend to the output. Default ''.
@@ -36,8 +72,8 @@ function the_page_break_navigation( array $args = array() ): void {
  *     @type string 'aria_label'         ARIA label text for the nav element. Default 'Page breaks'.
  *     @type string 'class'              Custom class for the nav element. Default 'page-break-navigation'.
  *     @type string 'type'               Link format. Can be 'list', 'select', or custom.
- *     @type string 'mid_size'           How many numbers to either side of the current pages. Default 2.
- *     @type string 'end_size'           How many numbers on either the start and the end list edges. Default 1.
+ *     @type int    'mid_size'           How many numbers to either side of the current pages. Default 2.
+ *     @type int    'end_size'           How many numbers on either the start and the end list edges. Default 1.
  *     @type string 'link_before'        Content to prepend to each page number. Default ''.
  *     @type string 'link_after'         Content to append to each page number. Default ''.
  *     @type string 'links_before'       Content to prepend to the page numbers. Default ''.
@@ -71,7 +107,7 @@ function get_the_page_break_navigation( array $args = array() ): string {
 		'links_after'        => '',
 	);
 
-	$lis = get_archive_link_items( '\wpinc\navi\get_page_break_link', $numpages, $page, (int) $args['mid_size'], (int) $args['end_size'], 'select' === $args['type'] );
+	$lis = get_archive_link_items( '\wpinc\navi\get_page_break_link', $numpages, $page, $args['mid_size'], $args['end_size'], 'select' === $args['type'] );
 
 	$ls   = array();
 	$ls[] = make_adjacent_link_markup( '\wpinc\navi\get_page_break_link', true, $args['prev_text'], $numpages, $page );
@@ -81,7 +117,7 @@ function get_the_page_break_navigation( array $args = array() ): string {
 	$ls[] = make_adjacent_link_markup( '\wpinc\navi\get_page_break_link', false, $args['next_text'], $numpages, $page );
 
 	$ls  = implode( "\n", array_filter( $ls ) ) . "\n";
-	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'] ?? '', $args['aria_label'] ?? '' );
+	$nav = make_navigation_markup( $ls, $args['class'], $args['screen_reader_text'], $args['aria_label'] );  // @phan-suppress-current-line PhanTypePossiblyInvalidDimOffset
 	return $args['before'] . $nav . $args['after'];
 }
 
@@ -91,6 +127,8 @@ function get_the_page_break_navigation( array $args = array() ): string {
 
 /**
  * Retrieves page break link url. Based on _wp_link_page().
+ *
+ * @psalm-suppress RedundantCastGivenDocblockType
  *
  * @param int           $idx  Page number.
  * @param \WP_Post|null $post The post.

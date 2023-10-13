@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2022-07-01
+ * @version 2023-10-13
  */
 
 namespace wpinc\navi;
@@ -28,7 +28,7 @@ function _cb_wp_head__link_page_break(): void {
 		return;
 	}
 	$post = get_post();
-	if ( ! $post ) {
+	if ( ! ( $post instanceof \WP_Post ) ) {
 		return;
 	}
 	$page_num = _get_page_break_count( $post );
@@ -72,6 +72,7 @@ function _get_page_break_count( \WP_Post $post ): int {
  * Retrieves adjacent page break url.
  *
  * @access private
+ * @global \WP_Query $wp_query
  *
  * @param bool     $previous   Whether to retrieve previous post.
  * @param \WP_Post $post       Post.

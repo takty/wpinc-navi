@@ -4,17 +4,23 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-09-19
+ * @version 2023-10-13
  */
 
 namespace wpinc\navi;
 
 require_once __DIR__ . '/markup.php';
 
-/**
+/** phpcs:ignore
  * Displays yearly archive select.
  *
- * @param array<string, mixed> $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
+ * phpcs:ignore
+ * @param array{
+ *     type?        : string,
+ *     default_text?: string,
+ *     date?        : string,
+ *     meta_key?    : string,
+ * } $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_yearly_archive_select( array $args = array() ): void {
 	$args += array(
@@ -26,10 +32,15 @@ function the_yearly_archive_select( array $args = array() ): void {
 	the_date_archives( $args );
 }
 
-/**
+/** phpcs:ignore
  * Displays taxonomy archive select.
  *
- * @param array<string, mixed> $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
+ * phpcs:ignore
+ * @param array{
+ *     type?        : string,
+ *     default_text?: string,
+ *     taxonomy?    : string,
+ * } $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archive_select( array $args = array() ): void {
 	$args += array(
@@ -44,19 +55,41 @@ function the_taxonomy_archive_select( array $args = array() ): void {
 // -----------------------------------------------------------------------------
 
 
-/**
+/** phpcs:ignore
  * Displays date archive links based on type and format.
  *
- * @param array<string, mixed> $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
+ * phpcs:ignore
+ * @param array{
+ *     type?        : string,
+ *     default_text?: string,
+ *     date?        : string,
+ *     meta_key?    : string,
+ * } $args (Optional) Array of arguments. See get_date_archives() for information on accepted arguments.
  */
 function the_date_archives( array $args = array() ): void {
 	echo get_date_archives( $args );  // phpcs:ignore
 }
 
-/**
+/** phpcs:ignore
  * Retrieves date archive links based on type and format.
  *
- * @param array<string, mixed> $args {
+ * phpcs:ignore
+ * @param array{
+ *     before?       : string,
+ *     after?        : string,
+ *     type?         : string,
+ *     link_before?  : string,
+ *     link_after?   : string,
+ *     do_show_count?: bool,
+ *     default_text? : string,
+ *     post_type?    : string,
+ *     date?         : string,
+ *     limit?        : string|int,
+ *     order?        : string,
+ *     meta_key?     : string,
+ * } $args (Optional) Array of type, format, and term query parameters.
+ *
+ * $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     'before'        Content to prepend to the output. Default ''.
@@ -108,12 +141,15 @@ function get_date_archives( array $args = array() ): string {
  *
  * @access private
  *
+ * @global \wpdb $wpdb
+ * @global \WP_Locale $wp_locale
+ *
  * @param string     $type      Type of archive to retrieve. Accepts 'daily', 'monthly', or 'yearly'.
  * @param string|int $limit     Number of links to limit the query to.
  * @param string     $order     Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
  * @param string     $post_type Post type.
  * @param string     $meta_key  Meta key used instead of post_date.
- * @return array<string, mixed>[] Link items.
+ * @return array{ url?: string, text: string, count?: int, current?: bool }[] Link items.
  */
 function _get_date_link_items( string $type, $limit, string $order, string $post_type, string $meta_key = '' ): array {
 	global $wpdb, $wp_locale;
@@ -170,8 +206,10 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 				$url = add_query_arg( 'post_type', $post_type, $url );
 			}
 			$text    = sprintf( '%d', $r->year );
-			$count   = $r->count;
-			$current = is_archive() && (string) $year === (string) $r->year;
+			$count   = (int) $r->count;
+			$current = is_archive() &&
+				is_numeric( $year ) && is_numeric( $r->year ) &&
+				(string) $year === (string) $r->year;
 			$lis[]   = compact( 'url', 'text', 'count', 'current' );
 		}
 	} elseif ( 'monthly' === $type ) {
@@ -182,20 +220,33 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 			}
 			/* translators: 1: month name, 2: 4-digit year */
 			$text    = sprintf( __( '%1$s %2$d' ), $wp_locale->get_month( $r->month ), $r->year );
-			$count   = $r->count;
-			$current = is_archive() && (string) $year === (string) $r->year && (string) $monthnum === (string) $r->month;
+			$count   = (int) $r->count;
+			$current = is_archive() &&
+				is_numeric( $year ) && is_numeric( $r->year ) &&
+				is_numeric( $monthnum ) && is_numeric( $r->month ) &&
+				(string) $year === (string) $r->year &&
+				(string) $monthnum === (string) $r->month;
 			$lis[]   = compact( 'url', 'text', 'count', 'current' );
 		}
-	} elseif ( 'daily' === $type ) {
+	} else {  // If $type is 'daily', that is obvious.
 		foreach ( (array) $rs as $r ) {
 			$url = get_day_link( $r->year, $r->month, $r->dayofmonth );
 			if ( 'post' !== $post_type ) {
 				$url = add_query_arg( 'post_type', $post_type, $url );
 			}
-			$text    = sprintf( '%1$d-%2$02d-%3$02d 00:00:00', $r->year, $r->month, $r->dayofmonth );
-			$text    = (string) mysql2date( get_option( 'date_format' ), $text );
-			$count   = $r->count;
-			$current = is_archive() && (string) $year === (string) $r->year && (string) $monthnum === (string) $r->month && (string) $day === (string) $r->dayofmonth;
+			$text = sprintf( '%1$d-%2$02d-%3$02d 00:00:00', $r->year, $r->month, $r->dayofmonth );
+			$df   = get_option( 'date_format' );
+			if ( is_string( $df ) ) {
+				$text = (string) mysql2date( $df, $text );
+			}
+			$count   = (int) $r->count;
+			$current = is_archive() &&
+				is_numeric( $year ) && is_numeric( $r->year ) &&
+				is_numeric( $monthnum ) && is_numeric( $r->month ) &&
+				is_numeric( $day ) && is_numeric( $r->day ) &&
+				(string) $year === (string) $r->year &&
+				(string) $monthnum === (string) $r->month &&
+				(string) $day === (string) $r->dayofmonth;
 			$lis[]   = compact( 'url', 'text', 'count', 'current' );
 		}
 	}
@@ -206,19 +257,41 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 // -----------------------------------------------------------------------------
 
 
-/**
+/** phpcs:ignore
  * Displays taxonomy archive links based on type and format.
  *
- * @param array<string, mixed> $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
+ * phpcs:ignore
+ * @param array{
+ *     type?        : string,
+ *     default_text?: string,
+ *     taxonomy?    : string,
+ * } $args (Optional) Array of arguments. See get_taxonomy_archives() for information on accepted arguments.
  */
 function the_taxonomy_archives( array $args = array() ): void {
 	echo get_taxonomy_archives( $args );  // phpcs:ignore
 }
 
-/**
+/** phpcs:ignore
  * Retrieves taxonomy archive links based on type and format.
  *
- * @param array<string, mixed> $args {
+ * phpcs:ignore
+ * @param array{
+ *     before?       : string,
+ *     after?        : string,
+ *     type?         : string,
+ *     link_before?  : string,
+ *     link_after?   : string,
+ *     do_show_count?: bool,
+ *     default_text? : string,
+ *     post_type?    : string,
+ *     taxonomy?     : string,
+ *     limit?        : string|int,
+ *     order?        : string,
+ *     hierarchical? : bool,
+ *     parent?       : int,
+ * } $args (Optional) Array of type, format, and term query parameters.
+ *
+ * $args {
  *     (Optional) Array of type, format, and term query parameters.
  *
  *     @type string     'before'        Content to prepend to the output. Default ''.
@@ -286,7 +359,7 @@ function get_taxonomy_archives( array $args = array() ): string {
  * @param string     $order        Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
  * @param bool       $hierarchical Whether to include terms that have non-empty descendants. Default false.
  * @param string     $post_type    Post type.
- * @return array<string, mixed>[] Link items.
+ * @return array<string, array{ url?: string, text: string, count?: int, current?: bool }> Link items.
  */
 function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool $hierarchical, string $post_type ): array {
 	global $wpdb;
@@ -305,6 +378,9 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 		$post_type = $pto->name;
 	}
 	$term = get_query_var( 'term' );
+	if ( ! is_string( $term ) ) {
+		$term = null;
+	}
 	$type = 'term';
 	$args = compact( 'type', 'limit', 'order', 'post_type', 'term' );
 
@@ -343,24 +419,31 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	return $lis;
 }
 
-/**
+/** phpcs:ignore
  * Sorts taxonomy archive link items.
  *
  * @access private
- *
- * @param array<string, mixed> $items        Link items.
+ * @psalm-suppress ArgumentTypeCoercion
+ * phpcs:ignore
+ * @param array<
+ *     string,
+ *     array{ url?: string, text: string, count?: int, current?: bool }
+ * > $items Link items.
  * @param bool                 $hierarchical Whether to include terms that have non-empty descendants.
  * @param string               $post_type    Post type.
  * @param array<string, mixed> $query_args   Query arguments for get_terms.
- * @return array<string, mixed>[] Link items.
+ * @return list<array{ url?: string, text: string, count?: int, current?: bool }> Link items.
  */
 function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $post_type, array $query_args ): array {
 	$ret = array();
 
 	if ( $hierarchical ) {
-		$tx  = $query_args['taxonomy'];
+		$tx = $query_args['taxonomy'];
+		if ( ! is_string( $tx ) ) {
+			wp_die( '$query_args[\'taxonomy\'] must be a taxonomy name.' );
+		}
 		$ids = array();
-		foreach ( $items as $slug => $it ) {
+		foreach ( $items as $slug => $_it ) {
 			$t = get_term_by( 'slug', $slug, $tx );
 			if ( $t instanceof \WP_Term ) {
 				$ids = array_merge( $ids, get_ancestors( $t->term_id, $tx ) );
@@ -369,8 +452,11 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
 		$ids = array_unique( $ids );
 
 		$qvt = is_tax() ? get_query_var( 'term' ) : null;
+		if ( ! is_string( $qvt ) ) {
+			$qvt = null;
+		}
 		foreach ( $ids as $id ) {
-			$t = get_term_by( 'term_id', (int) $id, $tx );
+			$t = get_term_by( 'term_id', $id, $tx );
 			if ( $t instanceof \WP_Term ) {
 				$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, 0, $qvt );
 
@@ -379,7 +465,7 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
 		}
 		$query_args['parent'] = '';
 	}
-	$ts = get_terms( $query_args );
+	$ts = get_terms( $query_args );  // @phpstan-ignore-line
 	if ( is_array( $ts ) ) {
 		foreach ( $ts as $t ) {
 			if ( $t instanceof \WP_Term ) {
@@ -401,10 +487,13 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
  * @param string      $post_type    Post type.
  * @param int         $count        Count of posts.
  * @param string|null $slug         Slug of current term.
- * @return array<string, mixed> An item.
+ * @return array{ url: string, text: string, count: int, current: bool } An item.
  */
 function _create_taxonomy_link_item( \WP_Term $t, bool $hierarchical, string $post_type, int $count = 0, ?string $slug = null ): array {
 	$url = get_term_link( $t );
+	if ( ! is_string( $url ) ) {
+		$url = '';
+	}
 	if ( $post_type && 'post' !== $post_type ) {
 		$url = add_query_arg( 'post_type', $post_type, $url );
 	}
@@ -427,7 +516,7 @@ function _get_term_depth( \WP_Term $t ): int {
 	$d = 0;
 	while ( $t instanceof \WP_Term && $t->parent ) {
 		$t = get_term_by( 'term_id', $t->parent, $t->taxonomy );
-		$d++;
+		++$d;
 	}
 	return $d;
 }
