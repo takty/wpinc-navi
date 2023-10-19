@@ -13,6 +13,7 @@ namespace wpinc\navi;
 
 /** phpcs:ignore
  * Makes post list of specific post type.
+ *
  * phpcs:ignore
  * @param array{
  *     post_type?         : string,
