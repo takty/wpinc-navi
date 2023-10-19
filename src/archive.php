@@ -355,6 +355,7 @@ function get_taxonomy_archives( array $args = array() ): string {
  * Retrieves taxonomy archive link items.
  *
  * @access private
+ * @global \wpdb $wpdb
  *
  * @param string     $taxonomy     Taxonomy name to which results should be limited.
  * @param string|int $limit        Number of links to limit the query to.
@@ -389,7 +390,7 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	if ( empty( $post_type ) ) {
 		$where = $wpdb->prepare( "WHERE post_status = 'publish' AND tt.taxonomy = %s", $taxonomy );
 	} else {
-		$where = $wpdb->prepare( "WHERE post_type = %s AND post_status = 'publish' AND tt.taxonomy = %s", $post_type, $taxonomy );
+		$where = $wpdb->prepare( "WHERE post_type = %s AND post_status = 'publish' AND tt.taxonomy = %s", array( $post_type, $taxonomy ) );
 	}
 	$where = apply_filters( 'getarchives_where', $where, $args );
 	$join  = "INNER JOIN $wpdb->term_relationships AS tr ON $wpdb->posts.ID = tr.object_id INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id";
@@ -437,8 +438,6 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
  * @return list<array{ url?: string, text: string, count?: int, current?: bool }> Link items.
  */
 function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $post_type, array $query_args ): array {
-	$ret = array();
-
 	if ( $hierarchical ) {
 		$tx = $query_args['taxonomy'];
 		if ( ! is_string( $tx ) ) {
@@ -467,15 +466,20 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
 		}
 		$query_args['parent'] = '';
 	}
-	$ts = get_terms( $query_args );  // @phpstan-ignore-line
+	$query_args['fields'] = 'all';
+	/**
+	 * Terms. This is determined by $query_args['fields'] being 'all'.
+	 *
+	 * @var \WP_Term[]|\WP_Error $ts
+	 */
+	$ts  = get_terms( $query_args );  // @phpstan-ignore-line
+	$ret = array();
 	if ( is_array( $ts ) ) {
 		foreach ( $ts as $t ) {
-			if ( $t instanceof \WP_Term ) {
-				if ( ! isset( $items[ $t->slug ] ) ) {
-					continue;
-				}
-				$ret[] = $items[ $t->slug ];
+			if ( ! isset( $items[ $t->slug ] ) ) {
+				continue;
 			}
+			$ret[] = $items[ $t->slug ];
 		}
 	}
 	return $ret;
