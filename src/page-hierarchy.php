@@ -4,8 +4,10 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-13
+ * @version 2023-10-19
  */
+
+declare(strict_types=1);
 
 namespace wpinc\navi;
 
@@ -273,7 +275,7 @@ function _get_page_link_items( array $query_args, int $parent_id, ?callable $fil
 	 *
 	 * @var \WP_Post[] $ps
 	 */
-	$ps = get_posts( $query_args );
+	$ps = get_posts( $query_args );  // @phpstan-ignore-line
 	global $post;
 	$lis = array();
 	foreach ( $ps as $p ) {

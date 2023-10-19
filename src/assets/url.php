@@ -1,11 +1,13 @@
 <?php
 /**
- * URL Utilities.
+ * URL Utilities
  *
  * @package Wpinc
  * @author Takuto Yanagida
- * @version 2023-10-12
+ * @version 2023-10-19
  */
+
+declare(strict_types=1);
 
 namespace wpinc;
 
