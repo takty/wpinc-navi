@@ -257,7 +257,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 	}
 	$base      = html_entity_decode( get_pagenum_link() );
 	$url_parts = explode( '?', $base );
-	$total     = $wp_query->max_num_pages;
+	$total     = (int) ceil( $wp_query->max_num_pages );
 	$current   = get_query_var( 'paged', 1 );
 	$current   = is_numeric( $current ) ? (int) $current : 1;
 	$base      = trailingslashit( $url_parts[0] ) . '%_%';
