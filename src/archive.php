@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2023-10-20
  */
 
 declare(strict_types=1);
@@ -414,7 +414,7 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	foreach ( (array) $rs as $r ) {
 		$t = get_term_by( 'term_taxonomy_id', (int) $r->tt_id, $taxonomy );
 		if ( $t instanceof \WP_Term ) {
-			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, $r->count, is_tax() ? $term : null );
+			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, (int) $r->count, is_tax() ? $term : null );
 
 			$lis[ $t->slug ] = $it;
 		}
