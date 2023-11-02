@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2023-11-02
  */
 
 declare(strict_types=1);
@@ -259,7 +259,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$url_parts = explode( '?', $base );
 	$total     = (int) ceil( $wp_query->max_num_pages );
 	$current   = get_query_var( 'paged', 1 );
-	$current   = is_numeric( $current ) ? (int) $current : 1;
+	$current   = is_numeric( $current ) ? max( 1, (int) $current ) : 1;
 	$base      = trailingslashit( $url_parts[0] ) . '%_%';
 	$format    = $wp_rewrite->using_index_permalinks() && ! strpos( $base, 'index.php' ) ? 'index.php/' : '';
 	$format   .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
