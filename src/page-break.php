@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2023-11-04
  */
 
 declare(strict_types=1);
@@ -131,6 +131,7 @@ function get_the_page_break_navigation( array $args = array() ): string {
  * Retrieves page break link url. Based on _wp_link_page().
  *
  * @psalm-suppress RedundantCastGivenDocblockType
+ * @global \WP_Rewrite $wp_rewrite
  *
  * @param int           $idx  Page number.
  * @param \WP_Post|null $post The post.
