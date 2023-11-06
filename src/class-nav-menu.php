@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2023-11-06
  */
 
 declare(strict_types=1);
@@ -454,6 +454,8 @@ class Nav_Menu {
 	/**
 	 * Callback function for 'wp_update_nav_menu' action.
 	 *
+	 * @psalm-suppress PossiblyUnusedMethod
+	 *
 	 * @param int                       $menu_id   ID of the updated menu.
 	 * @param array<string, mixed>|null $menu_data An array of menu data.
 	 */
@@ -470,11 +472,11 @@ class Nav_Menu {
 	/**
 	 * Callback function for 'save_post_page' action.
 	 *
-	 * @param int      $post_id Post ID.
-	 * @param \WP_Post $post    Post object.
-	 * @param bool     $update  Whether this is an existing post being updated.
+	 * @param int      $_post_id Post ID.
+	 * @param \WP_Post $_post    Post object.
+	 * @param bool     $update   Whether this is an existing post being updated.
 	 */
-	public static function cb_save_post_page_( int $post_id, \WP_Post $post, bool $update ): void {
+	public static function cb_save_post_page_( int $_post_id, \WP_Post $_post, bool $update ): void {
 		if ( $update ) {
 			foreach ( get_nav_menu_locations() as $menu_name ) {
 				$menu = wp_get_nav_menu_object( $menu_name );
@@ -516,6 +518,8 @@ class Nav_Menu {
 	/**
 	 * Retrieves menu ID.
 	 *
+	 * @psalm-suppress PossiblyUnusedMethod
+	 *
 	 * @return int|null Menu ID.
 	 */
 	public function get_menu_id(): ?int {
@@ -524,6 +528,8 @@ class Nav_Menu {
 
 	/**
 	 * Retrieves item attributes.
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod
 	 *
 	 * @param int $id Item ID.
 	 * @return string[] Attributes.
@@ -534,6 +540,8 @@ class Nav_Menu {
 
 	/**
 	 * Retrieves item IDs.
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod
 	 *
 	 * @param int $parent_id (Optional) Parent ID. Default 0.
 	 * @return int[] Item IDs.
@@ -547,6 +555,8 @@ class Nav_Menu {
 
 	/**
 	 * Retrieves item ID with the attributes.
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod
 	 *
 	 * @param int      $parent_id  (Optional) Parent ID. Default 0.
 	 * @param string[] $attributes (Optional) Attributes. Default empty.
@@ -574,6 +584,8 @@ class Nav_Menu {
 	/**
 	 * Checks whether the parent has any children.
 	 *
+	 * @psalm-suppress PossiblyUnusedMethod
+	 *
 	 * @param int $parent_id (Optional) Parent ID. Default 0.
 	 * @return bool True if it has children.
 	 */
@@ -583,6 +595,8 @@ class Nav_Menu {
 
 	/**
 	 * Checks whether the parent has any grandchildren, or one of the children of the parent has any children.
+	 *
+	 * @psalm-suppress PossiblyUnusedMethod
 	 *
 	 * @param int $parent_id (Optional) Parent ID. Default 0.
 	 * @return bool True if it has grandchildren.
@@ -607,6 +621,7 @@ class Nav_Menu {
 	/** phpcs:ignore
 	 * Displays menu items.
 	 *
+	 * @psalm-suppress PossiblyUnusedMethod
 	 * phpcs:ignore
 	 * @param array{
 	 *     before?          : string,
