@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2023-11-08
  */
 
 declare(strict_types=1);
@@ -98,9 +98,9 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
 		 * Callback function.
 		 *
 		 * @param array<string, string>|string $atts    Attributes.
-		 * @param string                       $content The shortcode content.
+		 * @param string|null                  $content The shortcode content.
 		 */
-		function ( $atts, string $content ) use ( $args ) {
+		function ( $atts, ?string $content ) use ( $args ) {
 			return _sc_post_list( is_array( $atts ) ? $atts : array(), $content, $args );
 		}
 	);
@@ -113,7 +113,7 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
  * @psalm-suppress ArgumentTypeCoercion, InvalidScalarArgument
  *
  * @param array<string, string> $atts    Attributes.
- * @param string                $content The shortcode content.
+ * @param string|null           $content The shortcode content.
  * phpcs:ignore
  * @param array{
  *     post_type?         : string,
@@ -134,7 +134,7 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
  *     date_before?       : string,
  * } $args Arguments for get_post_list.
  */
-function _sc_post_list( array $atts, string $content, array $args ): string {
+function _sc_post_list( array $atts, ?string $content, array $args ): string {
 	$temp = array();
 	foreach ( $atts as $key => $val ) {
 		$key          = str_replace( '-', '_', $key );
