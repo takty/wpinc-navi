@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2023-12-26
  */
 
 declare(strict_types=1);
@@ -74,6 +74,7 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
  *     url?    : string,
  *     text    : string,
  *     current?: bool,
+ *     class?  : string,
  *     count?  : int,
  *     dots?   : bool,
  * }> $items Link item.
@@ -101,7 +102,8 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 
 				$url  = $item['url'] ?? '';
 				$cur  = $item['current'] ?? false;
-				$lms .= make_archive_link_markup( $url, $text, $cur, 'html', $before, $after_mod );
+				$ic   = $item['class'] ?? '';
+				$lms .= make_archive_link_markup( $url, $text, $cur, $ic, 'html', $before, $after_mod );
 			}
 		}
 		$temp = array( '<ul class="%2$slinks">', '%1$s', '</ul>' );
@@ -120,7 +122,8 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 
 				$url  = $item['url'] ?? '';
 				$cur  = $item['current'] ?? false;
-				$lms .= make_archive_link_markup( $url, $text, $cur, 'option', $before, $after_mod );
+				$ic   = $item['class'] ?? '';
+				$lms .= make_archive_link_markup( $url, $text, $cur, $ic, 'option', $before, $after_mod );
 				if ( $cur ) {
 					$has_cur = true;
 				}
@@ -147,12 +150,13 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
  * @param string $url     URL to archive.
  * @param string $text    Archive text description.
  * @param bool   $current True if the current page is the selected archive.
+ * @param string $cls     Custom class for the li element.
  * @param string $format  Link format. Can be 'link', 'option', 'html', or custom.
  * @param string $before  Content to prepend to the description.
  * @param string $after   Content to append to the description.
  * @return string HTML content.
  */
-function make_archive_link_markup( string $url, string $text, bool $current = false, string $format = 'html', string $before = '', string $after = '' ): string {
+function make_archive_link_markup( string $url, string $text, bool $current = false, string $cls = '', string $format = 'html', string $before = '', string $after = '' ): string {
 	$text = wptexturize( $text );
 	$url  = esc_url( _apply_get_archives_link_filter( $url ) );
 
@@ -166,7 +170,8 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 	} else {
 		$aria = $current ? ' aria-current="page"' : '';
 		if ( 'html' === $format ) {
-			$attr = $current ? ' class="current"' : '';
+			$cls  = empty( $cls ) ? ( $current ? 'current' : '' ) : ( $current ? "current $cls" : $cls );
+			$attr = empty( $cls ) ? '' : " class=\"$cls\"";
 			$html = sprintf( '	<li%3$s>%5$s<a class="nav-link" href="%1$s"%4$s>%2$s</a>%6$s</li>', $url, $text, $attr, $aria, $before, $after ) . "\n";
 		} else {
 			$html = sprintf( '	%4$s<a class="nav-link" href="%1$s"%3$s>%2$s</a>%5$s', $url, $text, $aria, $before, $after ) . "\n";

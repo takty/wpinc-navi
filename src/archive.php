@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-20
+ * @version 2023-12-26
  */
 
 declare(strict_types=1);
@@ -509,7 +509,8 @@ function _create_taxonomy_link_item( \WP_Term $t, bool $hierarchical, string $po
 		$text = "$line $text";
 	}
 	$current = $slug === $t->slug;
-	return compact( 'url', 'text', 'count', 'current' );
+	$class   = "$t->taxonomy-{$t->slug}";
+	return compact( 'url', 'text', 'count', 'current', 'class' );
 }
 
 /**
