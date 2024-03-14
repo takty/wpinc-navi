@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-11-08
+ * @version 2024-03-14
  */
 
 declare(strict_types=1);
@@ -110,7 +110,6 @@ function add_post_list_shortcode( string $post_type, string $taxonomy = '', arra
  * Callback function for shortcode 'post-list'.
  *
  * @access private
- * @psalm-suppress ArgumentTypeCoercion, InvalidScalarArgument
  *
  * @param array<string, string> $atts    Attributes.
  * @param string|null           $content The shortcode content.
@@ -196,11 +195,12 @@ function _sc_post_list( array $atts, ?string $content, array $args ): string {
 		}
 	}
 	$args = array_merge( $args, $new_atts );
-	$ret  = get_post_list( $args );  // @phpstan-ignore-line
+	/** @psalm-suppress InvalidArgument */  // phpcs:ignore
+	$ret = get_post_list( $args );  // @phpstan-ignore-line
 	if (
-		empty( $ret ) &&
+		'' === $ret &&
 		( ! isset( $args['echo_content_on_empty'] ) || false !== $args['echo_content_on_empty'] ) &&
-		! empty( $content )
+		is_string( $content ) && '' !== $content  // Check for non-empty-string.
 	) {
 		return $content;
 	}

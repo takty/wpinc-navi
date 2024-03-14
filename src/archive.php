@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-12-26
+ * @version 2024-03-14
  */
 
 declare(strict_types=1);
@@ -111,7 +111,7 @@ function the_date_archives( array $args = array() ): void {
  */
 function get_date_archives( array $args = array() ): string {
 	$pt = get_post_type();
-	$pt = $pt ? $pt : 'post';
+	$pt = is_string( $pt ) ? $pt : 'post';
 
 	$args += array(
 		'before'        => '',
@@ -134,6 +134,7 @@ function get_date_archives( array $args = array() ): string {
 	if ( empty( $lis ) ) {
 		return '';
 	}
+	/** @psalm-suppress ArgumentTypeCoercion */  // phpcs:ignore
 	$ls = make_archive_links_markup( $lis, $args['type'], '', $args['link_before'], $args['link_after'], $args['do_show_count'], $args['default_text'] );
 	return $args['before'] . $ls . $args['after'];
 }
@@ -172,12 +173,17 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 	$day       = get_query_var( 'day' );
 	$args      = compact( 'type', 'limit', 'order', 'post_type', 'year', 'monthnum', 'day' );
 
+	/**
+	 * Where clause.
+	 *
+	 * @var string $where
+	 */
 	$where = $wpdb->prepare( "WHERE post_type = %s AND post_status = 'publish'", $post_type );
 	$where = apply_filters( 'getarchives_where', $where, $args );
-	$join  = empty( $meta_key ) ? '' : "INNER JOIN $wpdb->postmeta ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id AND $wpdb->postmeta.meta_key = '$meta_key' )";
+	$join  = ( '' === $meta_key ) ? '' : "INNER JOIN $wpdb->postmeta ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id AND $wpdb->postmeta.meta_key = '$meta_key' )";
 	$join  = apply_filters( 'getarchives_join', $join, $args );
 
-	$column = empty( $meta_key ) ? 'post_date' : 'meta_value';
+	$column = ( '' === $meta_key ) ? 'post_date' : 'meta_value';
 	if ( 'yearly' === $type ) {
 		$query = "SELECT YEAR($column) AS `year`, count(ID) as `count` FROM $wpdb->posts $join $where GROUP BY YEAR($column) ORDER BY $column $order $limit";
 	} elseif ( 'monthly' === $type ) {
@@ -192,17 +198,17 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 	$key  = md5( $query );
 	$key  = "get_date_archives:$key:$last";
 	$rs   = wp_cache_get( $key, 'posts' );
-	if ( ! $rs ) {
+	if ( ! is_array( $rs ) ) {
 		$rs = $wpdb->get_results( $query );  // phpcs:ignore
 		wp_cache_set( $key, $rs, 'posts' );
 	}
-	if ( ! $rs ) {
+	if ( ! is_array( $rs ) ) {
 		return array();
 	}
 
 	$lis = array();
 	if ( 'yearly' === $type ) {
-		foreach ( (array) $rs as $r ) {
+		foreach ( $rs as $r ) {
 			$url = get_year_link( $r->year );
 			if ( 'post' !== $post_type ) {
 				$url = add_query_arg( 'post_type', $post_type, $url );
@@ -215,7 +221,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 			$lis[]   = compact( 'url', 'text', 'count', 'current' );
 		}
 	} elseif ( 'monthly' === $type ) {
-		foreach ( (array) $rs as $r ) {
+		foreach ( $rs as $r ) {
 			$url = get_month_link( $r->year, $r->month );
 			if ( 'post' !== $post_type ) {
 				$url = add_query_arg( 'post_type', $post_type, $url );
@@ -231,7 +237,7 @@ function _get_date_link_items( string $type, $limit, string $order, string $post
 			$lis[]   = compact( 'url', 'text', 'count', 'current' );
 		}
 	} else {  // If $type is 'daily', that is obvious.
-		foreach ( (array) $rs as $r ) {
+		foreach ( $rs as $r ) {
 			$url = get_day_link( $r->year, $r->month, $r->dayofmonth );
 			if ( 'post' !== $post_type ) {
 				$url = add_query_arg( 'post_type', $post_type, $url );
@@ -314,7 +320,7 @@ function the_taxonomy_archives( array $args = array() ): void {
  */
 function get_taxonomy_archives( array $args = array() ): string {
 	$pt = get_post_type();
-	$pt = $pt ? $pt : 'post';
+	$pt = is_string( $pt ) ? $pt : 'post';
 
 	$args += array(
 		'before'        => '',
@@ -362,7 +368,7 @@ function get_taxonomy_archives( array $args = array() ): string {
  * @param string     $order        Whether to use ascending or descending order. Accepts 'ASC', or 'DESC'.
  * @param bool       $hierarchical Whether to include terms that have non-empty descendants. Default false.
  * @param string     $post_type    Post type.
- * @return array<string, array{ url?: string, text: string, count?: int, current?: bool }> Link items.
+ * @return array<string, array{ url?: string, text: string, count?: int, current?: bool, class?: string }> Link items.
  */
 function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool $hierarchical, string $post_type ): array {
 	global $wpdb;
@@ -373,7 +379,7 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	if ( 'ASC' !== $order ) {
 		$order = 'DESC';
 	}
-	if ( ! empty( $post_type ) ) {
+	if ( '' !== $post_type ) {
 		$pto = get_post_type_object( $post_type );
 		if ( ! $pto || ! is_post_type_viewable( $pto ) ) {
 			return array();
@@ -387,9 +393,19 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	$type = 'term';
 	$args = compact( 'type', 'limit', 'order', 'post_type', 'term' );
 
-	if ( empty( $post_type ) ) {
+	if ( '' === $post_type ) {
+		/**
+		 * Where clause.
+		 *
+		 * @var string $where
+		 */
 		$where = $wpdb->prepare( "WHERE post_status = 'publish' AND tt.taxonomy = %s", $taxonomy );
 	} else {
+		/**
+		 * Where clause.
+		 *
+		 * @var string $where
+		 */
 		$where = $wpdb->prepare( "WHERE post_type = %s AND post_status = 'publish' AND tt.taxonomy = %s", array( $post_type, $taxonomy ) );
 	}
 	$where = apply_filters( 'getarchives_where', $where, $args );
@@ -402,16 +418,16 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
 	$key  = md5( $query );
 	$key  = "get_taxonomy_archives:$key:$last";
 	$rs   = wp_cache_get( $key, 'posts' );
-	if ( ! $rs ) {
+	if ( ! is_array( $rs ) ) {
 		$rs = $wpdb->get_results( $query );  // phpcs:ignore
 		wp_cache_set( $key, $rs, 'posts' );
 	}
-	if ( ! $rs ) {
+	if ( ! is_array( $rs ) ) {
 		return array();
 	}
 
 	$lis = array();
-	foreach ( (array) $rs as $r ) {
+	foreach ( $rs as $r ) {
 		$t = get_term_by( 'term_taxonomy_id', (int) $r->tt_id, $taxonomy );
 		if ( $t instanceof \WP_Term ) {
 			$it = _create_taxonomy_link_item( $t, $hierarchical, $post_type, (int) $r->count, is_tax() ? $term : null );
@@ -426,16 +442,15 @@ function _get_taxonomy_link_items( string $taxonomy, $limit, string $order, bool
  * Sorts taxonomy archive link items.
  *
  * @access private
- * @psalm-suppress ArgumentTypeCoercion
  * phpcs:ignore
  * @param array<
  *     string,
- *     array{ url?: string, text: string, count?: int, current?: bool }
+ *     array{ url?: string, text: string, count?: int, current?: bool, class?: string }
  * > $items Link items.
  * @param bool                 $hierarchical Whether to include terms that have non-empty descendants.
  * @param string               $post_type    Post type.
  * @param array<string, mixed> $query_args   Query arguments for get_terms.
- * @return list<array{ url?: string, text: string, count?: int, current?: bool }> Link items.
+ * @return list<array{ url?: string, text: string, count?: int, current?: bool, class?: string }> Link items.
  */
 function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $post_type, array $query_args ): array {
 	if ( $hierarchical ) {
@@ -471,6 +486,7 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
 	 * Terms. This is determined by $query_args['fields'] being 'all'.
 	 *
 	 * @var \WP_Term[]|\WP_Error $ts
+	 * @psalm-suppress InvalidArgument
 	 */
 	$ts  = get_terms( $query_args );  // @phpstan-ignore-line
 	$ret = array();
@@ -493,7 +509,7 @@ function _sort_taxonomy_link_items( array $items, bool $hierarchical, string $po
  * @param string      $post_type    Post type.
  * @param int         $count        Count of posts.
  * @param string|null $slug         Slug of current term.
- * @return array{ url: string, text: string, count: int, current: bool } An item.
+ * @return array{ url: string, text: string, count: int, current: bool, class: string } An item.
  */
 function _create_taxonomy_link_item( \WP_Term $t, bool $hierarchical, string $post_type, int $count = 0, ?string $slug = null ): array {
 	$url = get_term_link( $t );

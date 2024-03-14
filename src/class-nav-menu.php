@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-11-06
+ * @version 2024-03-13
  */
 
 declare(strict_types=1);
@@ -288,7 +288,7 @@ class Nav_Menu {
 		if ( is_single() ) {
 			$txs = get_object_taxonomies( (string) $post_type );
 			$pid = get_the_ID();
-			if ( $pid ) {
+			if ( is_int( $pid ) ) {
 				$ts = array();
 				foreach ( $txs as $tx ) {
 					$p_ts = wp_get_post_terms( $pid, $tx );
@@ -456,10 +456,10 @@ class Nav_Menu {
 	 *
 	 * @psalm-suppress PossiblyUnusedMethod
 	 *
-	 * @param int                       $menu_id   ID of the updated menu.
+	 * @param int                       $_menu_id  ID of the updated menu.
 	 * @param array<string, mixed>|null $menu_data An array of menu data.
 	 */
-	public static function cb_wp_update_nav_menu_( int $menu_id, ?array $menu_data = null ): void {
+	public static function cb_wp_update_nav_menu_( int $_menu_id, ?array $menu_data = null ): void {
 		if ( is_array( $menu_data ) && isset( $menu_data['menu-name'] ) && is_string( $menu_data['menu-name'] ) ) {
 			$menu = wp_get_nav_menu_object( $menu_data['menu-name'] );
 			if ( $menu ) {
@@ -502,13 +502,13 @@ class Nav_Menu {
 				return $items;
 			}
 			$items = wp_get_nav_menu_items( $id );
-			if ( $items ) {
+			if ( is_array( $items ) ) {
 				set_transient( $key, $items, self::CACHE_EXPIRATION );
 			}
 		} else {
 			$items = wp_get_nav_menu_items( $id );
 		}
-		return $items ? $items : array();
+		return is_array( $items ) ? $items : array();
 	}
 
 
@@ -756,7 +756,7 @@ class Nav_Menu {
 		$li_at    = $id_at . " class=\"$cls\"";
 		$title    = $args['title_filter']( $mi->title, $mi );  // @phpstan-ignore-line
 		$cont     = $args['content_filter']( trim( $mi->post_content ) );
-		$cont_div = empty( $cont ) ? '' : "<div class=\"description\">$cont</div>";
+		$cont_div = ( '' === $cont ) ? '' : "<div class=\"description\">$cont</div>";
 
 		if ( 'post_type_archive' === $mi->type ) {  // @phpstan-ignore-line
 			$pto = get_post_type_object( $mi->object );  // @phpstan-ignore-line

@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2024-03-13
  */
 
 declare(strict_types=1);
@@ -76,10 +76,10 @@ function get_post_list( array $args = array() ): string {
 	);
 
 	$args['order'] = strtolower( $args['order'] );
-	if ( ! empty( $args['date_after'] ) ) {
+	if ( '' !== $args['date_after'] ) {
 		$args['date_after'] = _align_date( $args['date_after'], '0' );
 	}
-	if ( ! empty( $args['date_before'] ) ) {
+	if ( '' !== $args['date_before'] ) {
 		$args['date_before'] = _align_date( $args['date_before'], '9' );
 	}
 	if ( ! is_array( $args['terms'] ) ) {
@@ -104,6 +104,7 @@ function get_post_list( array $args = array() ): string {
 	if ( 'asc' === $args['order'] ) {
 		$items = array_reverse( $items );
 	}
+	/** @psalm-suppress InvalidArgument */  // phpcs:ignore
 	return _make_list( $args, $items );
 }
 
@@ -220,13 +221,12 @@ function _add_posts( array $augend, array $addend, ?int $count = null ): array {
  * Makes post items.
  *
  * @access private
- * @psalm-suppress RedundantCastGivenDocblockType
  *
- * @param \WP_Post[]      $ps        Posts.
- * @param string          $taxonomy  Taxonomy.
- * @param callable|string $year_date Function that retrieves year and date from a post.
- * @param string          $after     Date to retrieve posts after.
- * @param string          $before    Date to retrieve posts before.
+ * @param \WP_Post[] $ps        Posts.
+ * @param string     $taxonomy  Taxonomy.
+ * @param callable   $year_date Function that retrieves year and date from a post.
+ * @param string     $after     Date to retrieve posts after.
+ * @param string     $before    Date to retrieve posts before.
  * @return list<array{
  *     title: string,
  *     cats : string[],
@@ -236,26 +236,23 @@ function _add_posts( array $augend, array $addend, ?int $count = null ): array {
  *     p    : \WP_Post,
  * }> Post item.
  */
-function _make_item_list( array $ps, string $taxonomy, $year_date, string $after, string $before ): array {
+function _make_item_list( array $ps, string $taxonomy, callable $year_date, string $after, string $before ): array {
 	$items = array();
 	foreach ( $ps as $p ) {
 		$title = wp_strip_all_tags( get_the_title( $p ) );
-		$url   = (string) get_permalink( $p );
-		$cats  = array();
-		$ts    = get_the_terms( $p, $taxonomy );
+		/** @psalm-suppress RedundantCastGivenDocblockType */  // phpcs:ignore
+		$url  = (string) get_permalink( $p );
+		$cats = array();
+		$ts   = get_the_terms( $p, $taxonomy );
 		if ( is_array( $ts ) ) {
 			foreach ( $ts as $t ) {
 				$cats[] = $t->name;
 			}
 		}
-		$year = 0;
-		$date = 0;
-		if ( is_callable( $year_date ) ) {
-			list( $year, $date ) = call_user_func( $year_date, $p->ID );
-			if ( ! is_int( $year ) || ! is_int( $date ) ) {
-				$year = 0;
-				$date = 0;
-			}
+		list( $year, $date ) = call_user_func( $year_date, $p->ID );
+		if ( ! is_int( $year ) || ! is_int( $date ) ) {
+			$year = 0;
+			$date = 0;
 		}
 		if ( $after && $date < $after ) {
 			continue;

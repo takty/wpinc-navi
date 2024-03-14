@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-10-19
+ * @version 2024-03-13
  */
 
 declare(strict_types=1);
@@ -104,7 +104,8 @@ function the_sibling_page_navigation( array $args = array(), array $query_args =
  * @return string Markup for child page links.
  */
 function get_the_child_page_navigation( array $args = array(), array $query_args = array() ): string {
-	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
+	if ( '' !== ( $args['screen_reader_text'] ?? '' ) && '' === ( $args['aria_label'] ?? '' ) ) {
+		/** @psalm-suppress PossiblyUndefinedArrayOffset */  // phpcs:ignore
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
@@ -180,7 +181,8 @@ function get_the_child_page_navigation( array $args = array(), array $query_args
  * @return string Markup for sibling page links.
  */
 function get_the_sibling_page_navigation( array $args = array(), array $query_args = array() ): string {
-	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
+	if ( '' !== ( $args['screen_reader_text'] ?? '' ) && '' === ( $args['aria_label'] ?? '' ) ) {
+		/** @psalm-suppress PossiblyUndefinedArrayOffset */  // phpcs:ignore
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
@@ -253,7 +255,6 @@ function _make_parent_page_link_markup( int $pp_id = 0 ): string {
  *
  * @access private
  * @global \WP_Post $post
- * @psalm-suppress ArgumentTypeCoercion, RedundantCastGivenDocblockType
  *
  * @param array<string, mixed> $query_args Arguments for get_posts().
  * @param int                  $parent_id  The ID of the parent page.
@@ -274,6 +275,7 @@ function _get_page_link_items( array $query_args, int $parent_id, ?callable $fil
 	 * Posts. This is determined by $query_args['fields'] being ''.
 	 *
 	 * @var \WP_Post[] $ps
+	 * @psalm-suppress ArgumentTypeCoercion
 	 */
 	$ps = get_posts( $query_args );  // @phpstan-ignore-line
 	global $post;
@@ -282,9 +284,10 @@ function _get_page_link_items( array $query_args, int $parent_id, ?callable $fil
 		if ( ! ( $p instanceof \WP_Post ) ) {
 			continue;
 		}
-		if ( $filter && ! call_user_func( $filter, $p ) ) {
+		if ( is_callable( $filter ) && ! call_user_func( $filter, $p ) ) {
 			continue;
 		}
+		/** @psalm-suppress RedundantCastGivenDocblockType */  // phpcs:ignore
 		$lis[] = array(
 			'url'     => (string) get_permalink( $p ),
 			'text'    => get_the_title( $p ),

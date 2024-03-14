@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-12-26
+ * @version 2024-03-14
  */
 
 declare(strict_types=1);
@@ -21,10 +21,10 @@ namespace wpinc\navi;
  * @return string Navigation template tag.
  */
 function make_navigation_markup( string $links, ?string $cls, ?string $screen_reader_text, ?string $aria_label ): string {
-	if ( empty( $screen_reader_text ) ) {
+	if ( ! is_string( $screen_reader_text ) || '' === $screen_reader_text ) {  // Check for non-empty-string.
 		$screen_reader_text = __( 'Posts navigation' );
 	}
-	if ( empty( $aria_label ) ) {
+	if ( ! is_string( $aria_label ) || '' === $aria_label ) {  // Check for non-empty-string.
 		$aria_label = $screen_reader_text;
 	}
 	$temp = array(
@@ -54,7 +54,7 @@ function make_navigation_markup( string $links, ?string $cls, ?string $screen_re
  * @param int      $current  Current page.
  * @return string HTML content.
  */
-function make_adjacent_link_markup( $get_link, bool $previous, string $text, int $total, int $current ): string {
+function make_adjacent_link_markup( callable $get_link, bool $previous, string $text, int $total, int $current ): string {
 	$cls     = $previous ? 'nav-previous' : 'nav-next';
 	$is_link = $previous ? ( 1 < $current ) : ( $current < $total );
 
@@ -87,7 +87,7 @@ function make_adjacent_link_markup( $get_link, bool $previous, string $text, int
  * @return string HTML content.
  */
 function make_archive_links_markup( array $items, string $type = 'list', string $cls = '', string $before = '', string $after = '', bool $do_show_count = false, string $label = '' ): string {
-	$cls = empty( $cls ) ? '' : ( sanitize_html_class( $cls ) . ' ' );
+	$cls = ( '' === $cls ) ? '' : ( sanitize_html_class( $cls ) . ' ' );
 
 	$lms = '';
 	if ( 'list' === $type ) {
@@ -129,7 +129,7 @@ function make_archive_links_markup( array $items, string $type = 'list', string 
 				}
 			}
 		}
-		$default = empty( $label ) ? '' : '	<option value="#"' . ( $has_cur ? ' disabled' : '' ) . '>%4$s</option>' . "\n";
+		$default = ( '' === $label ) ? '' : '	<option value="#"' . ( $has_cur ? ' disabled' : '' ) . '>%4$s</option>' . "\n";
 
 		$temp = array( '<select class="%2$slinks" onchange="%3$s">', $default . '%1$s', '</select>' );
 		$temp = implode( "\n", $temp ) . "\n";
@@ -170,8 +170,8 @@ function make_archive_link_markup( string $url, string $text, bool $current = fa
 	} else {
 		$aria = $current ? ' aria-current="page"' : '';
 		if ( 'html' === $format ) {
-			$cls  = empty( $cls ) ? ( $current ? 'current' : '' ) : ( $current ? "current $cls" : $cls );
-			$attr = empty( $cls ) ? '' : " class=\"$cls\"";
+			$cls  = ( '' === $cls ) ? ( $current ? 'current' : '' ) : ( $current ? "current $cls" : $cls );
+			$attr = ( '' === $cls ) ? '' : " class=\"$cls\"";
 			$html = sprintf( '	<li%3$s>%5$s<a class="nav-link" href="%1$s"%4$s>%2$s</a>%6$s</li>', $url, $text, $attr, $aria, $before, $after ) . "\n";
 		} else {
 			$html = sprintf( '	%4$s<a class="nav-link" href="%1$s"%3$s>%2$s</a>%5$s', $url, $text, $aria, $before, $after ) . "\n";
@@ -216,7 +216,9 @@ function _assign_link_tags( string $url ): string {
 					echo "\t<link rel=\"archive\" href=\"$url\" id=\"$id\">\n";  // phpcs:ignore
 				}
 				echo "</div>\n";
-			}
+			},
+			10,
+			0
 		);
 	}
 	$id     = '#' . hash( 'crc32b', $url );

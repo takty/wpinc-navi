@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-11-04
+ * @version 2024-03-13
  */
 
 declare(strict_types=1);
@@ -84,11 +84,12 @@ function the_page_break_navigation( array $args = array() ): void {
  * @return string Markup for page break links.
  */
 function get_the_page_break_navigation( array $args = array() ): string {
-	global $page, $numpages, $multipage, $post;
+	global $page, $numpages, $multipage;
 	if ( ! $multipage ) {
 		return '';
 	}
-	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
+	if ( '' !== ( $args['screen_reader_text'] ?? '' ) && '' === ( $args['aria_label'] ?? '' ) ) {
+		/** @psalm-suppress PossiblyUndefinedArrayOffset */  // phpcs:ignore
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
@@ -130,7 +131,6 @@ function get_the_page_break_navigation( array $args = array() ): string {
 /**
  * Retrieves page break link url. Based on _wp_link_page().
  *
- * @psalm-suppress RedundantCastGivenDocblockType
  * @global \WP_Rewrite $wp_rewrite
  *
  * @param int           $idx  Page number.
@@ -139,15 +139,16 @@ function get_the_page_break_navigation( array $args = array() ): string {
  */
 function get_page_break_link( int $idx, ?\WP_Post $post = null ): string {
 	global $wp_rewrite;
-	if ( empty( $post ) && isset( $GLOBALS['post'] ) ) {
+	if ( null === $post && isset( $GLOBALS['post'] ) ) {
 		$post = $GLOBALS['post'];
 	}
-	if ( ! $post ) {
+	if ( ! ( $post instanceof \WP_Post ) ) {
 		return '';
 	}
+	/** @psalm-suppress RedundantCastGivenDocblockType */  // phpcs:ignore
 	$url = (string) get_permalink( $post );
 	if ( 1 < $idx ) {
-		if ( empty( get_option( 'permalink_structure' ) ) || ( in_array( $post->post_status, array( 'draft', 'pending' ), true ) ) ) {
+		if ( '' === get_option( 'permalink_structure' ) || ( in_array( $post->post_status, array( 'draft', 'pending' ), true ) ) ) {
 			$url = add_query_arg( 'page', $idx, $url );
 		} elseif ( 'page' === get_option( 'show_on_front' ) && get_option( 'page_on_front' ) === $post->ID ) {
 			$url = trailingslashit( $url ) . user_trailingslashit( "$wp_rewrite->pagination_base/$idx", 'single_paged' );
@@ -163,6 +164,7 @@ function get_page_break_link( int $idx, ?\WP_Post $post = null ): string {
 			$query_args['preview_nonce'] = wp_unslash( $_GET['preview_nonce'] );
 		}
 		// phpcs:enable
+		/** @psalm-suppress RedundantCastGivenDocblockType */  // phpcs:ignore
 		$url = (string) get_preview_post_link( $post, $query_args, $url );
 	}
 	return $url;

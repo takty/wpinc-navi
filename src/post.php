@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2023-11-02
+ * @version 2024-03-14
  */
 
 declare(strict_types=1);
@@ -151,7 +151,6 @@ function get_the_post_navigation( array $args = array() ): string {
  * Retrieves the adjacent page break link.
  *
  * @access private
- * @psalm-suppress RedundantCastGivenDocblockType
  *
  * @param string       $text           Text for anchor link.
  * @param bool         $previous       Whether to display link to previous or next post.
@@ -165,6 +164,7 @@ function _get_adjacent_post_link( string $text, bool $previous, bool $in_same_te
 	$post = get_adjacent_post( $in_same_term, $excluded_terms, $previous, $taxonomy );
 
 	if ( $post instanceof \WP_Post ) {
+		/** @psalm-suppress RedundantCastGivenDocblockType */  // phpcs:ignore
 		$url = (string) get_permalink( $post );
 		$rel = $previous ? 'prev' : 'next';
 		return sprintf( '<div class="%s"><a class="nav-link" href="%s" rel="%s">%s</a></div>', $cls, esc_url( $url ), $rel, esc_html( $text ) );
@@ -227,10 +227,11 @@ function get_the_posts_navigation( array $args = array() ): string {
 	if ( $wp_query->max_num_pages < 2 ) {
 		return '';
 	}
-	if ( is_search() && empty( get_search_query() ) ) {
+	if ( is_search() && '' === get_search_query() ) {
 		return '';
 	}
-	if ( ! empty( $args['screen_reader_text'] ) && empty( $args['aria_label'] ) ) {
+	if ( '' !== ( $args['screen_reader_text'] ?? '' ) && '' === ( $args['aria_label'] ?? '' ) ) {
+		/** @psalm-suppress PossiblyUndefinedArrayOffset */  // phpcs:ignore
 		$args['aria_label'] = $args['screen_reader_text'];
 	}
 	$args += array(
@@ -261,7 +262,7 @@ function get_the_posts_navigation( array $args = array() ): string {
 	$current   = get_query_var( 'paged', 1 );
 	$current   = is_numeric( $current ) ? max( 1, (int) $current ) : 1;
 	$base      = trailingslashit( $url_parts[0] ) . '%_%';
-	$format    = $wp_rewrite->using_index_permalinks() && ! strpos( $base, 'index.php' ) ? 'index.php/' : '';
+	$format    = ( $wp_rewrite->using_index_permalinks() && false === strpos( $base, 'index.php' ) ) ? 'index.php/' : '';
 	$format   .= $wp_rewrite->using_permalinks() ? user_trailingslashit( $wp_rewrite->pagination_base . '/%#%', 'paged' ) : '?paged=%#%';
 
 	if ( isset( $url_parts[1] ) ) {
