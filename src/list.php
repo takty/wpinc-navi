@@ -4,7 +4,7 @@
  *
  * @package Wpinc Navi
  * @author Takuto Yanagida
- * @version 2024-03-13
+ * @version 2025-03-17
  */
 
 declare(strict_types=1);
@@ -90,7 +90,7 @@ function get_post_list( array $args = array() ): string {
 		usort(
 			$ps,
 			function ( $p1, $p2 ) {
-				return (int) $p1->menu_order <=> (int) $p2->menu_order;
+				return (int) $p2->menu_order <=> (int) $p1->menu_order;
 			}
 		);
 	}
